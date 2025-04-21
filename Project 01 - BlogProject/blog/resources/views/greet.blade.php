@@ -1,11 +1,7 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Greet Page</title>
-</head>
-<body>
+@extends('layouts.app')
+
+@section('content')
 
     <h1>Hello, {{ $name }}!</h1>
     
-</body>
-</html>
+@endsection
