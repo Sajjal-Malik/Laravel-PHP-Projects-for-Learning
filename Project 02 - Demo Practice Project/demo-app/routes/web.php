@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\DemoController;
+use App\Http\Controllers\PhotoController;
+use App\Http\Controllers\RegistrationController;
+use App\Http\Controllers\SingleActionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -13,19 +17,54 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/register', [RegistrationController::class, 'index']);
 
-Route::get('/demo/{name}/{id}', function ($name, $id=null) {
-    $data = compact('name', 'id');
-    return view('demo')->with($data);
+Route::post('/register', [RegistrationController::class, 'register']);
 
-});
 
-Route::any('/test', function () {
-    echo "Using ANY METHOD but Hitting GET Request by Default";
-});
+// Route::get('/', [DemoController::class, 'index']);
+
+// Route::get('/about', [DemoController::class, 'about']);
+
+// Route::get('/courses', SingleActionController::class);
+
+
+// Route::resource('/photo', PhotoController::class);
+
+// Route::get('/', function(){
+//     return view('home');
+// });
+
+// Route::get('/about', function(){
+//     return view('about');
+// });
+
+// Route::get('/courses', function(){
+//     return view('courses');
+// });
+
+
+// Route::get('/', function ($name) {
+//     return view('welcome');
+// });
+
+
+// Route::get('/{name?}', function ($name = null) {
+//     $demo = '<h2>HTML Code Directly</h2>';
+//     $data = compact('name', 'demo');
+//     return view('home')->with($data);
+// });
+
+
+// Route::get('/demo/{name}/{id}', function ($name, $id=null) {
+//     $data = compact('name', 'id');
+//     return view('demo')->with($data);
+
+// });
+
+// Route::any('/test', function () {
+//     echo "Using ANY METHOD but Hitting GET Request by Default";
+// });
 
 // Route::post('/test', function(){
 //     echo "POST METHOD HIT";
