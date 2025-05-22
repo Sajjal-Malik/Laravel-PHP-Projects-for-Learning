@@ -18,16 +18,38 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
+Route::get('/', function(){
+    return view('welcome');
+});
 
-Route::get('/register', [RegistrationController::class, 'index']);
+Route::get('/index', function(){
+    return view('index');
+});
 
-Route::post('/register', [RegistrationController::class, 'register']);
+Route::get('/register', function(){
+    return view('customer');
+});
 
-Route::get('/customer/create', [CustomerController::class, 'create']);
+
+
+
+// Route::get('/register', [RegistrationController::class, 'index']);
+
+// Route::post('/register', [RegistrationController::class, 'register']);
+
+
+Route::post('/customer', [CustomerController::class, 'store']);
+
+// Route::get('/customer/create', [CustomerController::class, 'create']);
 
 Route::get('/customer/view', [CustomerController::class, 'view']);
 
-Route::post('/customer', [CustomerController::class, 'store']);
+Route::get('/customer/delete/{id}', [CustomerController::class, 'delete'])->name('customer.delete');
+
+Route::get('/customer/edit/{id}', [CustomerController::class, 'edit'])->name('customer.edit');
+
+Route::get('/customer/update/{id}', [CustomerController::class, 'update'])->name('customer.update');
+
 
 // Route::get('/customers', function(){
 //     $customers = Customer::all();
@@ -46,7 +68,7 @@ Route::post('/customer', [CustomerController::class, 'store']);
 // Route::resource('/photo', PhotoController::class);
 
 // Route::get('/', function(){
-//     return view('home');
+//     return view('welcome');
 // });
 
 // Route::get('/about', function(){

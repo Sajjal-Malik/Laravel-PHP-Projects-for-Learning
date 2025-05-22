@@ -14,6 +14,7 @@
     </head>
 
     <body>
+        <x-navbar />
 
         <div class="container">
 
@@ -53,6 +54,12 @@
                             <td> {{ $customer->country }} </td>
                             <td> {{ $customer->state }} </td>
                             <td> {{ $customer->status == '1' ? "Active" : "Away" }} </td>
+                            <td> 
+                                {{-- <a href="{{url('/customer/delete')}}/{{$customer->customer_id}}"><button class="btn btn-danger">Delete</button></a> --}}
+                                <a href="{{route('customer.delete', ['id'=> $customer->customer_id])}}"><button class="btn btn-danger">Delete</button></a>
+
+                                <a href="{{route('customer.edit', ['id'=> $customer->customer_id])}}"><button class="btn btn-primary">Edit</button></a>
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
