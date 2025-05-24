@@ -7,6 +7,7 @@
 
 @endphp
 
+
 @if($type = 'a')
 <a {{ $attributes->merge([
         'class' => "$classes rounded-md px-3 py-2 text-sm font-medium",
