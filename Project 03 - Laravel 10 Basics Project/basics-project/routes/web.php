@@ -1,6 +1,8 @@
 <?php
 
-use App\Http\Controllers\DemoController;
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\RegistrationController;
+use App\Models\Customer;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,4 +16,16 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', [DemoController::class, 'index']);
+Route::get('/', function(){
+    return view('index');
+});
+
+Route::get('/register', [RegistrationController::class, 'index']);
+Route::post('/register', [RegistrationController::class, 'register']);
+
+Route::get('/customer/create', [CustomerController::class, 'create'])->name('customer.create');
+Route::get('/customer', [CustomerController::class, 'view']);
+Route::get('/customer/delete/{id}', [CustomerController::class, 'delete'])->name('customer.delete');
+Route::get('/customer/edit/{id}', [CustomerController::class, 'edit'])->name('customer.edit');
+Route::post('/customer/update/{id}', [CustomerController::class, 'update'])->name('customer.update');
+Route::post('/customer', [CustomerController::class, 'store']);
