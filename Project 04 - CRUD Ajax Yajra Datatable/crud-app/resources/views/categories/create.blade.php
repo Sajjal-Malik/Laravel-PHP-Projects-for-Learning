@@ -11,7 +11,9 @@
             integrity="sha384-4Q6Gf2aSP4eDXB8Miphtr37CMZZQ5oXLH2yaXMJ2w8e2ZtHTl7GptT4jmndRuHDT" crossorigin="anonymous">
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
         <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/jquery.dataTables.min.js" integrity="sha512-BkpSL20WETFylMrcirBahHfSnY++H2O1W+UnEEO4yNIl+jI2+zowyoGJpbtk6bx97fBXf++WJHSSK2MV4ghPcg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/jquery.dataTables.min.js"
+            integrity="sha512-BkpSL20WETFylMrcirBahHfSnY++H2O1W+UnEEO4yNIl+jI2+zowyoGJpbtk6bx97fBXf++WJHSSK2MV4ghPcg=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     </head>
 
     <body>
@@ -54,21 +56,26 @@
 
         <!-- Button trigger modal -->
         <div class="row">
-            <div class="col-md-6 offset-3" style="margin-top: 100px">
-                <a class="btn btn-info mb-3" data-bs-toggle="modal" data-bs-target="#exampleModal">Add Category</a>
+
+            <div class="col-md-8 offset-2" style="margin-top: 100px">
+
+
                 <table id="category-table" class="table">
                     <thead>
                         <tr>
                             <th scope="col">#</th>
                             <th scope="col">Name</th>
                             <th scope="col">Type</th>
+                            <th scope="col">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        
+
                     </tbody>
                 </table>
+
             </div>
+
         </div>
 
 
@@ -93,15 +100,21 @@
                     processing: true,
                     serverSide: true,
                     ajax: "{{ route('categories.index') }}",
+                    dom: '<"d-flex justify-content-between align-items-center mb-3"l<"custom-btn">f>rtip',
                     columns: [
                         { data: 'id' },
                         { data: 'name' },
                         { data: 'type' },
-                        { data: 'action', name: 'action', orderable: false },
-                    ]
+                        { data: 'action', name: 'action', orderable: false, searchable: false },
+                    ],
+                    initComplete: function () {
+                        // Move your Add Category button into the custom container
+                        $('.custom-btn').html(`
+                        <a class="btn btn-info" data-bs-toggle="modal" data-bs-target="#exampleModal">Add Category</a>
+        `);
+                    }
                 });
 
-                $('#model-table').html('Create Category');
                 $('#saveBtn').html('Save Category');
 
                 var form = $('#ajaxForm')[0];

@@ -12,9 +12,15 @@ class CategoryController extends Controller
 
         $categories = Category::all();
         
-        if($request->ajax){
-            return DataTables::of($categories)->make(true);
+        if($request->ajax()){
+            return DataTables::of($categories)
+            ->addColumn('action', function(){
+                return '<a href="" class="btn btn-info">View</a>';
+            })
+            ->rawColumns(['action'])
+            ->make(true);
         }
+        return view('categories.create');
     }
 
     public function create() {
