@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('categories/create', [CategoryController::class, 'create']);
+Route::get('categories/index', [CategoryController::class, 'index'])->name('categories.index');
+
+Route::get('categories/create', [CategoryController::class, 'create'])->name('categories.create');
 
 Route::post('categories/store', [CategoryController::class, 'store'])->name('categories.store');
