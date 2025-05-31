@@ -109,12 +109,11 @@
                     ],
                     initComplete: function () {
                         // Move your Add Category button into the custom container
-                        $('.custom-btn').html(`
-                        <a class="btn btn-info" data-bs-toggle="modal" data-bs-target="#exampleModal">Add Category</a>
-        `);
+                        $('.custom-btn').html(`<a class="btn btn-info" data-bs-toggle="modal" data-bs-target="#exampleModal">Add Category</a>`);
                     }
                 });
 
+                $('#modal-title').html('Create Category');
                 $('#saveBtn').html('Save Category');
 
                 var form = $('#ajaxForm')[0];
@@ -142,6 +141,31 @@
                                 $('#nameError').html(error.responseJSON.errors.name)
                                 $('#typeError').html(error.responseJSON.errors.type)
                             }
+                        }
+                    });
+                });
+
+                $('body').on('click', '.editButton', function(event){
+
+                    event.preventDefault(); // prevent page reload
+
+                    var id = $(this).data('id');
+                    var url = "{{ url('categories/edit') }}/" + id;
+                    
+                    $.ajax({
+                        url: url,
+                        method: 'GET',
+                        success: function(response){
+                            $('.ajax-modal').modal('show');
+                            $('#modal-title').html('Edit Category');
+                            $('#saveBtn').html('Update Category');
+
+                            $('#name').val(response.name);
+                            $('#type').empty().append('<option selected value=" ' + response.id + ' "> ' + response.type + ' </option>')
+
+                        },
+                        error: function(error){
+                            conosle.log(error);
                         }
                     });
                 });

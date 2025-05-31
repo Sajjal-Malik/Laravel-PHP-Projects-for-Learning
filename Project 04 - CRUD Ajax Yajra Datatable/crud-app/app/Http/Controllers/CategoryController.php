@@ -10,12 +10,13 @@ class CategoryController extends Controller
 {
     public function index(Request $request){
 
-        $categories = Category::all();
+        $categories = Category::select(['id', 'name', 'type']);
         
         if($request->ajax()){
             return DataTables::of($categories)
-            ->addColumn('action', function(){
-                return '<a href="" class="btn btn-info">View</a>';
+            ->addColumn('action', function($row){
+                return '<a href="" class="btn btn btn-info editButton" data-id="'. $row->id . '">Edit</a>
+                        <a href="" class="btn btn btn-danger delButton" data-id="'. $row->id . '">Delete</a>';
             })
             ->rawColumns(['action'])
             ->make(true);
@@ -43,5 +44,14 @@ class CategoryController extends Controller
         return response()->json([
             'success' => 'Category saved successfully'
         ], 201);
+    }
+
+    public function edit($id){
+
+        $category = Category::find($id);
+        if(!$category){
+            abort(404, 'Category not found');
+        }
+        return $category;
     }
 }
