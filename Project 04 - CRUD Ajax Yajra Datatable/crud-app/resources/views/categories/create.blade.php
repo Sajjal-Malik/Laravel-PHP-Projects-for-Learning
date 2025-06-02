@@ -31,6 +31,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
+                            <input type="hidden" name="category_id" id="category_id">
                             <div class="form-group mb-3">
                                 <label for="name">Name</label>
                                 <input type="text" id="name" name="name" class="form-control">
@@ -57,7 +58,7 @@
         <!-- Button trigger modal -->
         <div class="row">
 
-            <div class="col-md-8 offset-2" style="margin-top: 100px">
+            <div class="col-lg-8 offset-2" style="margin-top: 100px">
 
 
                 <table id="category-table" class="table">
@@ -96,7 +97,7 @@
                 });
 
 
-                $('#category-table').DataTable({
+                var table = $('#category-table').DataTable({
                     processing: true,
                     serverSide: true,
                     ajax: "{{ route('categories.index') }}",
@@ -109,7 +110,7 @@
                     ],
                     initComplete: function () {
                         // Move your Add Category button into the custom container
-                        $('.custom-btn').html(`<a class="btn btn-info" data-bs-toggle="modal" data-bs-target="#exampleModal">Add Category</a>`);
+                        $('.custom-btn').html(`<a class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal" id="add_category">Add Category</a>`);
                     }
                 });
 
@@ -132,6 +133,11 @@
                         data: form_data,
 
                         success: function (response) {
+                            table.ajax.reload();
+                            $('#name').val('');
+                            $('#type').val('');
+                            $('#category_id').val('');
+
                             $('.ajax-modal').modal('hide');
                             swal("Success!", response.success, 'success');
                         },
@@ -145,30 +151,42 @@
                     });
                 });
 
-                $('body').on('click', '.editButton', function(event){
-
+                $('body').on('click', '.editButton', function (event) {
                     event.preventDefault(); // prevent page reload
 
                     var id = $(this).data('id');
-                    var url = "{{ url('categories/edit') }}/" + id;
-                    
+
                     $.ajax({
-                        url: url,
+                        url: "{{ url('categories') }}/" + id + "/edit",
                         method: 'GET',
-                        success: function(response){
+                        success: function (response) {
                             $('.ajax-modal').modal('show');
                             $('#modal-title').html('Edit Category');
                             $('#saveBtn').html('Update Category');
 
+                            $('#category_id').val(response.id);
                             $('#name').val(response.name);
-                            $('#type').empty().append('<option selected value=" ' + response.id + ' "> ' + response.type + ' </option>')
-
+                            var type = capitalizeFirstLetter(response.type);
+                            // Keep existing dropdown and just select correct option
+                            $('#type').val(response.type); // Set by value (not ID)
+                            // Optionally update dropdown if needed like this:
+                            // $('#type').empty().append('<option selected value="' + response.type + '">' + type + '</option>');
                         },
-                        error: function(error){
-                            conosle.log(error);
+                        error: function (error) {
+                            console.log(error);
                         }
                     });
                 });
+
+                $('#add_category').click(function () {
+                    $('#modal-title').html('Create Category');
+                    $('#saveBtn').html('Save Category');
+                });
+
+                function capitalizeFirstLetter(word) {
+                    return word.charAt(0).toUpperCase() + word.slice(1);
+                }
+
 
             });
 

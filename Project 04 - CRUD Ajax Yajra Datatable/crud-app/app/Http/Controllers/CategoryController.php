@@ -15,7 +15,7 @@ class CategoryController extends Controller
         if($request->ajax()){
             return DataTables::of($categories)
             ->addColumn('action', function($row){
-                return '<a href="" class="btn btn btn-info editButton" data-id="'. $row->id . '">Edit</a>
+                return '<a href="" class="btn btn btn-warning editButton" data-id="'. $row->id . '">Edit</a>
                         <a href="" class="btn btn btn-danger delButton" data-id="'. $row->id . '">Delete</a>';
             })
             ->rawColumns(['action'])
@@ -31,6 +31,23 @@ class CategoryController extends Controller
 
     public function store(Request $request){
         
+        if($request->category_id != null){
+
+            $category = Category::find($request->category_id);
+            
+            if(!$category){
+                abort(404);
+            }
+            $category->update([
+                'name' => $request->name,
+                'type' => $request->type
+            ]);
+
+            return response()->json([
+                "success" => "Category Updated Successfully"
+            ], 201);
+        }
+
         $request->validate([
             'name' => 'required|min:3|max:50',
             'type' => 'required',
