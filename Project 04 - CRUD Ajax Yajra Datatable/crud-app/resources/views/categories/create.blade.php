@@ -124,7 +124,7 @@
                     $('.error-messages').html('');
 
                     var form_data = new FormData(form);
-
+                            
                     $.ajax({
                         url: '{{ route("categories.store")}}',
                         method: 'POST',
@@ -151,6 +151,7 @@
                     });
                 });
 
+
                 $('body').on('click', '.editButton', function (event) {
                     event.preventDefault(); // prevent page reload
 
@@ -167,10 +168,12 @@
                             $('#category_id').val(response.id);
                             $('#name').val(response.name);
                             var type = capitalizeFirstLetter(response.type);
-                            // Keep existing dropdown and just select correct option
                             $('#type').val(response.type); // Set by value (not ID)
+
+                            // Keep existing dropdown and just select correct option
                             // Optionally update dropdown if needed like this:
                             // $('#type').empty().append('<option selected value="' + response.type + '">' + type + '</option>');
+
                         },
                         error: function (error) {
                             console.log(error);
@@ -186,6 +189,25 @@
                 function capitalizeFirstLetter(word) {
                     return word.charAt(0).toUpperCase() + word.slice(1);
                 }
+
+
+                $('body').on('click', '.delButton', function () {
+                    var id = $(this).data('id');
+
+                    $.ajax({
+                        url: "{{ url('categories/destroy') }}/" + id,
+                        method: 'DELETE',
+                        success: function (response) {
+                            table.ajax.reload();
+                            swal("Success!", response.success, 'success');
+                        },
+                        error: function (error) {
+                            console.log(error);
+                        }
+                    });
+                });
+
+
 
 
             });

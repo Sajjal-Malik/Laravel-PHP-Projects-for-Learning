@@ -20,4 +20,6 @@ Route::get('categories/create', [CategoryController::class, 'create'])->name('ca
 
 Route::post('categories/store', [CategoryController::class, 'store'])->name('categories.store');
 
-Route::get('categories/{id}/edit/', [CategoryController::class, 'edit'])->name('categories.edit');
+Route::get('categories/{id}/edit', [CategoryController::class, 'edit'])->name('categories.edit');
+
+Route::delete('categories/destroy/{id}', [CategoryController::class, 'destroy'])->name('categories.destroy');
