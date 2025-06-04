@@ -124,7 +124,7 @@
                     $('.error-messages').html('');
 
                     var form_data = new FormData(form);
-                            
+
                     $.ajax({
                         url: '{{ route("categories.store")}}',
                         method: 'POST',
@@ -176,19 +176,19 @@
 
                         },
                         error: function (error) {
-                            console.log(error);
+                            aert(error);
                         }
                     });
                 });
-
+                
+                function capitalizeFirstLetter(word) {
+                    return word.charAt(0).toUpperCase() + word.slice(1);
+                }
                 $('#add_category').click(function () {
                     $('#modal-title').html('Create Category');
                     $('#saveBtn').html('Save Category');
                 });
 
-                function capitalizeFirstLetter(word) {
-                    return word.charAt(0).toUpperCase() + word.slice(1);
-                }
 
 
                 $('body').on('click', '.delButton', function () {
