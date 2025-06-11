@@ -1,0 +1,240 @@
+✅ Goal of Task 1
+Learn and implement:
+
+    Laravel CRUD operations
+
+    Form validation (frontend + backend)
+
+    Yajra DataTables
+
+    Seeding with dummy data
+
+    Exception handling using try-catch, DB::transaction
+
+    Organize everything into Company and Employee modules
+
+
+🧩 Main Entities in This Task
+    Model	Fields
+    Company	name (required), email, website
+    Employee	first_name (required), last_name (required), company_id (FK), email, phone
+
+    Each has its own CRUD, validation, seeding, and listing.
+
+
+🔁 Features to Implement for Each (Company + Employee)
+Feature	Description
+    Listing	Use Yajra DataTable to show all records with action buttons
+    Create	A form to create new Company/Employee
+    Read (View)	Show record details (on a separate page or modal)
+    Update	Form to update details (opens new page)
+    Delete	Confirm before deleting, then reload the page after deletion
+    Frontend Validation	Use Parsley.js or simple JS validation in the form
+    Backend Validation	Laravel FormRequest class or $request->validate()
+
+
+Database Seeding	Create:
+    One default Company
+
+    Two Employees (linked to the company) |
+    | Exception Handling | Use try-catch and transactions to ensure safe DB operations |
+
+
+📋 Step-by-Step Instructions
+🔹 Step 1: Setup Migration & Models
+For Companies:
+    Create migration for companies table with fields: name, email, website
+
+    Create Company model
+
+    Add fillable properties
+
+For Employees:
+    Create migration for employees table with fields: first_name, last_name, company_id, email, phone
+
+    Add foreign key company_id referencing companies.id
+
+    Create Employee model
+
+    Add fillable properties
+
+
+Setup relationship:
+
+// In Employee.php
+public function company() {
+    return $this->belongsTo(Company::class);
+}
+
+// In Comapny.php
+public function employee() {
+    return $this->hasMany(Employee::class);
+}
+
+
+🔹 Step 2: Create Seeders
+Create a CompanySeeder that creates 1 company
+
+Create an EmployeeSeeder that creates 2 employees for that company
+
+
+Register them in DatabaseSeeder.php
+
+    $this->call([
+        CompanySeeder::class,
+        EmployeeSeeder::class,
+    ]);
+
+
+// command to run after making seeders for seeding data into the database
+php artisan db:seed
+        OR
+php artisan migrate:fresh --seed
+
+
+🔹 Step 3: Set Up Routes
+For Companies:
+    Route::resource('companies', CompanyController::class);
+    OR 
+Create All routes manually
+// to check the routes use this command
+    php artisan route:list 
+
+For Employees:
+
+    Route::resource('employees', EmployeeController::class);
+    OR 
+Create All routes manually
+// to check the routes use this command
+    php artisan route:list
+
+
+You’ll get all CRUD routes automatically:
+
+    GET /companies (index)
+
+    GET /companies/create
+
+    POST /companies
+
+    GET /companies/{id}/edit
+
+    PUT /companies/{id}
+
+    DELETE /companies/{id}
+
+    (Same for employees)
+
+
+🔹 Step 4: Build Controllers
+Use php artisan make:controller CompanyController --resource
+Same for EmployeeController
+
+In each controller:
+Add logic to:
+
+    List using Yajra DataTable
+
+    Return views for create/edit
+
+    Validate using FormRequest
+
+    Store/update/delete using Eloquent
+
+Wrap DB operations in try-catch with DB::beginTransaction()
+
+
+🔹 Step 5: Create Views
+    Company index (listing with Yajra DataTable)
+
+    Company create/edit form (shared or separate)
+
+    Same for Employees
+
+    Use AJAX + Yajra for loading records
+
+In action buttons, have:
+
+    Edit → goes to edit page
+
+    Delete → confirms then deletes
+
+    View → modal or separate read-only page
+
+
+🔹 Step 6: Validation
+Backend:
+    Create StoreCompanyRequest and UpdateCompanyRequest (same for Employee)
+
+    Use them in controller methods
+
+Frontend:
+    Use Parsley.js or basic JavaScript validation to check inputs before submission
+
+
+🔹 Step 7: Add Yajra DataTable
+Install using:
+
+    composer require yajra/laravel-datatables-oracle
+Use AJAX-based datatable in both list pages. Show columns:
+
+For Companies:
+
+    Name
+
+    Email
+
+    Website
+
+    Actions
+
+For Employees:
+
+    First Name
+
+    Last Name
+
+    Company Name (use relation)
+
+    Email
+
+    Phone
+
+    Actions
+
+
+🔹 Step 8: Exception Handling
+In store() and update() methods of both controllers, wrap code with:
+
+DB::beginTransaction();
+try {
+    // Create or update logic
+    DB::commit();
+} catch (\Exception $e) {
+    DB::rollBack();
+    return back()->withErrors(['error' => 'Something went wrong']);
+}
+
+
+🔹 Step 9: Git Branching
+Use only 2 branches:
+
+    master
+
+    task_1
+
+All code changes go into task_1 only.
+
+✅ Summary Checklist
+    Task	Done?
+    Migrations created	☐
+    Models created	☐
+    Seeder created and working	☐
+    CRUD routes set up	☐
+    Backend validation	☐
+    Frontend validation	☐
+    Yajra DataTable listings	☐
+    AJAX delete confirmation	☐
+    Create/edit forms	☐
+    Exception handling	☐
+    Git branch task_1 used	☐
