@@ -101,7 +101,6 @@ Create All routes manually
     php artisan route:list 
 
 For Employees:
-
     Route::resource('employees', EmployeeController::class);
     OR 
 Create All routes manually
