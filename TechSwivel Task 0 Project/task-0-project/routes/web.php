@@ -19,3 +19,10 @@ Route::get('/', function () {
 });
 
 Route::get('/firstForm', [FormController::class, 'getText']);
+
+Route::post('/remove/spaces', [FormController::class, 'removeSpaces']);
+
+
+Route::get('/secondForm', [FormController::class, 'getParagraph']);
+
+Route::post('/words/counts', [FormController::class, 'countWords']);
