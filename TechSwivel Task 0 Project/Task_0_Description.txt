@@ -1,0 +1,132 @@
+✅ Task 0: Post Form with TextArea
+🎯 Objective:
+Build two separate Laravel forms to practice form handling, backend validation, string manipulation, and storing data using Eloquent models. The goal is to gain foundational experience with requests, controllers, models, views, and migrations in Laravel.
+
+🔍 Laravel Learning Path Covered:
+    1.1) Setting up Laravel project and structure
+
+    1.2) Creating migrations and models
+
+    1.4) Handling form requests and validation
+
+    1.5) Laravel routes and controllers
+
+
+📌 Scope of the Task:
+This task is split into two subtasks:
+
+    Remove Spaces from a Sentence
+
+    Count Occurrences of a Word in a Paragraph
+
+Each subtask includes:
+
+    A form using Blade
+
+    Server-side validation using Request::validate()
+
+    Basic text manipulation using PHP functions
+
+    Database interaction using Eloquent
+
+    Returning output to the user in the same or a new view
+
+🖥️ UI Description:
+🔹 Subtask 1: Remove Spaces (First Form)
+
+    A <textarea> for entering a sentence
+
+    A submit button
+
+After submission:
+
+    All spaces are removed from the sentence
+
+    The result is stored in the texts table
+
+    The updated sentence is shown on the same page
+
+View: first-form.blade.php
+    Form Action: /remove/spaces (POST)
+
+
+🔹 Subtask 2: Word Count (Second Form)
+A form with:
+
+    A text input for the word
+
+    A <textarea> for the paragraph
+
+On submit:
+
+    The number of times the word appears in the paragraph is calculated (case-insensitive)
+
+    Original data is saved to the paragraphs table
+
+    Result is shown on a separate view (word-count.blade.php)
+
+View: second-form.blade.php
+    Form Action: /words/counts (POST)
+
+
+🔨 Functionality Details:
+Feature	Description
+Sentence Form	Removes all spaces and stores result in texts table
+Word Count Form	Counts how often a word appears in a paragraph, stores original inputs
+Backend Validation	Laravel's $request->validate() ensures required fields are submitted
+View Feedback	Displayed directly on submission pages or passed to a new Blade view
+
+
+🗃️ Database Design:
+texts Table:
+    id (PK)
+
+    sentence (text)
+
+    timestamps
+
+paragraphs Table:
+    id (PK)
+
+    word (text)
+
+    paragraph (text)
+
+    timestamps
+
+
+🧪 Routes Overview:
+Method	Endpoint	Description
+GET	/firstForm	Display sentence form
+POST	/remove/spaces	Handle sentence form and remove spaces
+GET	/secondForm	Display word count form
+POST	/words/counts	Handle word count and show result
+
+
+🧰 Technologies & Tools Used:
+    Laravel 10
+
+    Blade Templates
+
+    Laravel Routing & Controllers
+
+    Eloquent ORM (Text & Paragraph models)
+
+    PHP string functions (preg_replace, substr_count)
+
+    HTML forms with POST method
+
+
+✅ Learning Outcomes:
+    By completing this task, the intern will learn:
+
+    How to build and submit forms in Laravel
+
+    How to apply backend validation using $request->validate()
+
+    How to manipulate strings in PHP
+
+    How to store data using Eloquent models
+
+    How to show dynamic output using Blade conditionals and templates
+
