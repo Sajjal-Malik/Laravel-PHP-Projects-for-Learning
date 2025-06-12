@@ -103,7 +103,22 @@ class EmployeeController extends Controller
      */
     public function show(string $id)
     {
-        //
+        try{
+
+            $employee = Employee::with('company')->findOrFail($id);
+
+            return view('employees.show', compact('employee'));
+        }
+        catch(\Exception $e){
+
+            return response()->json([
+                    'error' => true,
+                    'message' => 'Something went wrong while showing an employee data.',
+                    'detail' => $e->getMessage()
+                ], 500);
+
+        }
+
     }
 
     /**
@@ -111,7 +126,22 @@ class EmployeeController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        try{
+
+            $employee = Employee::findOrFail($id);
+    
+            $companies = Company::all();
+    
+            return view('employees.edit', compact('employee', 'companies'));
+        }
+        catch(\Exception $e){
+
+            return response()->json([
+                'error' => true,
+                'message' => 'Something went wrong while loading employees data for editing.',
+                'details' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
