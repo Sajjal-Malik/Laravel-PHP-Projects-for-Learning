@@ -183,6 +183,27 @@ class EmployeeController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        try{
+
+            DB::beginTransaction();
+
+            $employee = Employee::findOrFail($id);
+
+            $employee->delete();
+
+            DB::commit();
+
+            return redirect()->route('employees.index')->with('success', 'Employee deleted Successfully');
+        }   
+        catch(\Exception $e){
+            
+            DB::rollBack();
+    
+            Log::error('Failed to delete employee: ' . $e->getMessage());
+    
+            return redirect()->back()->withErrors(['error' => 'Failed to delete Employee']);
+
+        }
+
     }
 }
