@@ -149,7 +149,33 @@ class EmployeeController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $validated = $request->validate([
+            'firstName' => 'required|string|max:255',
+            'lastName' => 'required|string|max:255',
+            'companyId' => 'nullable|exists:companies,id',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:20',
+        ]);
+
+        try{
+
+            DB::beginTransaction();
+
+            $employee = Employee::findOrFail($id);
+            $employee->update($validated);
+
+            DB::commit();
+
+            return redirect()->route('employees.index')->with('success', 'Employee updated Successfully');
+        }
+        catch(\Exception $e){
+
+            DB::rollBack();
+
+            Log::error("Failed to update Employee" . $e->getMessage());
+
+            return back()->withErrors(['error' => 'Something went wrong'])->withInput();
+        }
     }
 
     /**
