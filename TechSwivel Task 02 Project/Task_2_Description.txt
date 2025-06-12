@@ -1,0 +1,159 @@
+✅ Task 2: List, Add & Edit User Module
+🎯 Objective:
+Design a full-featured User Management Module in Laravel using AJAX, Yajra DataTables, and validation techniques. This task focuses on implementing Create, Read, Update, and Delete (CRUD) functionality through modals, with both frontend and backend validation.
+
+The main learning outcome is to apply key Laravel concepts in a practical UI: 
+    validation, AJAX, modals, migrations, seeders, and data tables.
+
+
+🔍 Laravel Learning Path Covered:
+    1.1) Setting up Laravel project and structure
+
+    1.2) Creating migrations and models
+
+    1.3) Working with factories and seeders
+
+    1.4) Handling form requests and validation
+
+    1.5) Laravel routes and controllers
+
+    2.1) Working with Yajra DataTables and AJAX
+
+
+📌 Scope of the Task:
+Validate form input using Parsley.js (Frontend) and Laravel Form Requests (Backend)
+
+    Use AJAX for all create, update, and delete operations (no page reload)
+
+    List users using Yajra DataTables
+
+    Show user information using Bootstrap modals
+
+    Provide feedback via alerts or modal-based messages
+
+    Avoid repeating previous mistakes and improve code clarity and structure
+
+
+🖥️ UI Description:
+User Listing Page (Using Yajra DataTable via AJAX):
+
+    Columns: firstName, lastName, email, password, age, phoneNumber, bio, DOB, Action
+
+    A “Create” button is shown at the top-right above the table
+
+    All actions (Create, View, Edit, Delete) are handled through modals using jQuery and AJAX
+
+
+Actions:
+
+    🔄 Update — Opens modal with pre-filled user info. Updates data via AJAX and refreshes the table.
+
+    👁️ View — Opens modal in read-only mode to display user info.
+
+    🗑️ Delete — Prompts for confirmation before deleting. On confirmation, deletes user and refreshes the DataTable via AJAX.
+
+
+🔨 Functionality Details:
+🔹 Add User:
+    Opens a modal via “Create” button
+
+    Frontend validation using Parsley.js
+
+    Backend validation using Form Request
+
+    On success, user is added and DataTable is refreshed without page reload
+
+
+
+🔹 Edit User:
+    Clicking “Edit” opens modal with user info fetched via AJAX
+
+    Email field is non-editable
+
+    On successful update, modal closes and table refreshes (AJAX)
+
+
+
+🔹 View User:
+    Opens a read-only modal with full user details
+
+
+
+🔹 Delete User:
+    Confirm dialog appears before delete
+
+    If confirmed, delete is performed via AJAX
+
+    DataTable updates without full page refresh
+
+
+
+🗃️ Database Design:
+User Table Columns:
+
+    firstName
+
+    lastName
+
+    email (Non-editable)
+
+    password
+
+    age
+
+    phoneNumber
+
+    bio
+
+    DOB
+
+
+Tasks:
+
+    Create a migration for the users table
+
+    Create a seeder to insert sample user data
+
+
+
+🧪 Routes Overview:
+Method	Endpoint	Description
+    POST	/users	Store new user
+    GET	/users	List all users
+    GET	/users/{userId}/edit	Fetch user for edit
+    PUT	/users/{userId}	Update user info
+    DELETE	/users/{userId}	Delete a user
+
+
+
+🧰 Technologies & Tools Used:
+    Laravel 10
+
+    jQuery & AJAX
+
+    Yajra DataTables
+
+    Parsley.js for frontend validation
+
+    Laravel Form Requests for backend validation
+
+    Bootstrap Modals
+
+    Font Awesome for action icons
+
+    Eloquent ORM
+
+
+✅ Learning Outcomes:
+By completing this task, the intern will gain experience in:
+
+    Creating responsive and dynamic CRUD interfaces
+
+    Using DataTables for listing and AJAX for data operations
+
+    Writing reusable modals for different operations
+
+    Implementing both client-side and server-side validation
+
+    Working with Laravel Migrations, Seeders, and Eloquent relationships (if extended)
+
