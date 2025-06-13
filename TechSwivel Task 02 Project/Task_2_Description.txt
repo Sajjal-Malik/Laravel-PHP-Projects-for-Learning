@@ -118,11 +118,11 @@ Tasks:
 
 🧪 Routes Overview:
 Method	Endpoint	Description
-    POST	/users	Store new user
-    GET	/users	List all users
-    GET	/users/{userId}/edit	Fetch user for edit
+    POST /users	Store new user
+    GET	/users List all users
+    GET	/users/{userId}/edit Fetch user for edit
     PUT	/users/{userId}	Update user info
-    DELETE	/users/{userId}	Delete a user
+    DELETE /users/{userId} Delete a user
 
 
 
