@@ -1,0 +1,212 @@
+✅ Task 3: Login User, Middleware, and Migration (Laravel Fortify + Roles + Access Control)
+🎯 Goal of Task 3
+To add user authentication, role-based access control, blocking/unblocking functionality, custom middleware, and file upload validation for the company logo, while reusing the CRUD functionality of Task 1.
+
+
+🔧 STEP-BY-STEP BREAKDOWN
+
+✅ Step 1: Install Laravel Fortify (User Authentication System)
+📌 Why?
+Laravel Fortify is a frontend-independent authentication backend for Laravel. It handles login, registration, password reset, etc.
+
+🛠 Install Fortify
+    composer require laravel/fortify
+    php artisan vendor:publish --provider="Laravel\Fortify\FortifyServiceProvider"
+
+🛠 Register FortifyServiceProvider
+In config/app.php under providers, (Only for Laravel < 9):
+    App\Providers\FortifyServiceProvider::class,
+
+🛠 Enable Fortify Features (in config/fortify.php)
+    'features' => [
+        Features::registration(),
+        Features::resetPasswords(),
+        Features::emailVerification(),
+    ],
+
+
+✅ Step 2: Create User Table and Role System
+🧱 Create users table with fields:
+    id
+
+    name
+
+    email
+
+    password
+
+    role (1 = Admin, 2 = User)
+
+    status (1 = active, 0 = blocked)
+
+
+You likely already created this in Task 3 prep. Example migration:
+
+    $table->tinyInteger('role')->default(2); // 1=Admin, 2=User
+    $tabe->boolean('status')->default(1); // 1=Active, 0=Blocked
+
+
+✅ Step 3: Seed Users
+Create one admin and a few users:
+
+    User::create([
+        'name' => 'Admin',
+        'email' => 'admin@example.com',
+        'password' => Hash::make('password'),
+        'role' => 1,
+        'status' => 1,
+    ]);
+
+    User::create([
+        'name' => 'User One',
+        'email' => 'user1@example.com',
+        'password' => Hash::make('password'),
+        'role' => 2,
+        'status' => 1,
+    ]);
+
+
+✅ Step 4: Add Middleware for Role and Blocked Users
+
+🛠 Middleware: CheckRole
+
+    php artisan make:middleware CheckRole
+
+Inside: app/Http/Middleware/CheckRole.php
+
+    public function handle($request, Closure $next, $role)
+    {
+        if (auth()->user()->role != $role) {
+        abort(403, 'Unauthorized');
+    }
+
+        return $next($request);
+    }
+
+
+🛠 Middleware: CheckBlocked
+
+php artisan make:middleware CheckBlocked
+
+Inside: app/Http/Middleware/CheckBlocked.php
+
+    public function handle($request, Closure $next)
+    {
+        if (auth()->user()->status == 0) {
+            Auth::logout();
+            return redirect('/login')->withErrors(['email' => 'Your account has been blocked.']);
+    }
+        return $next($request);
+    }
+
+🧩 Register in app/Http/Kernel.php:
+
+    protected $routeMiddleware = [
+        'role' => \App\Http\Middleware\CheckRole::class,
+        'check.blocked' => \App\Http\Middleware\CheckBlocked::class,
+    ];
+
+
+✅ Step 5: Protect Routes using Middleware
+In web.php, group your routes:
+
+Route::middleware(['auth', 'check.blocked'])->group(function () {
+
+    Route::middleware(['role:1'])->group(function () {
+        // Admin-only routes (Users management)
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::post('/user/status/{id}', [UserController::class, 'toggleBlock'])->name('users.toggleBlock');
+    });
+
+    Route::middleware(['role:2'])->group(function () {
+        // Regular user routes
+        Route::get('/home', fn() => view('home'))->name('home');
+
+        Route::resource('companies', CompanyController::class);
+        Route::resource('employees', EmployeeController::class);
+    });
+});
+
+
+✅ Step 6: Block/Unblock Users via AJAX
+In UserController:
+    public function toggleBlock($id)
+    {
+        $user = User::findOrFail($id);
+        $user->status = !$user->status;
+        $user->save();
+        return response()->json(['success' => true, 'status' => $user->status]);
+    }
+
+In Blade (JS):
+    $('.toggle-status').on('click', function () {
+        const userId = $(this).data('id');
+
+        $.post(`/user/status/${userId}`, {
+            _token: '{{ csrf_token() }}'
+        }, function (response) {
+            location.reload();
+        });
+    });
+
+✅ Step 7: Company Logo Upload with Validation
+Add column in companies migration:
+
+    $table->string('logo')->nullable(); // stores filename or path
+
+In CompanyController store():
+    if ($request->hasFile('logo')) {
+        $request->validate([
+            'logo' => 'image|dimensions:min_width=100,min_height=100|max:2048', // max:2048KB = 2MB
+        ]);
+
+        $filename = time() . '.' . $request->logo->extension();
+        $path = $request->logo->storeAs('public/logos', $filename);
+        $validated['logo'] = $filename;
+    }
+
+    Repeat similar in update().
+
+Make logo accessible publicly:
+
+    php artisan storage:link
+
+Then use in Blade:
+<img src="{{ asset('storage/logos/' . $company->logo) }}" width="80">
+
+
+✅ Step 8: Only Logged-in Users Can Use Companies & Employees CRUD
+Since all /companies and /employees routes are already inside auth + check.blocked middleware, this is already enforced. ✅
+
+✅ Step 9: Default Redirect After Login
+In FortifyServiceProvider:
+    public function boot()
+    {
+        Fortify::authenticateUsing(function (Request $request) {
+            $user = User::where('email', $request->email)->first();
+
+            if ($user && Hash::check($request->password, $user->password)) {
+                if ($user->status === 0) {
+                    throw ValidationException::withMessages([
+                        'email' => ['Your account is blocked.'],
+                    ]);
+                }
+
+                return $user;
+            }
+        });
+    }
+
+
+🔚 Summary of Task 3 Output
+    ✅ Admins can manage users and block/unblock them via AJAX.
+
+    ✅ Users are redirected to /home after login.
+
+    ✅ Blocked users are prevented from logging in.
+
+    ✅ Only authenticated users (role = 2) can access Companies & Employees modules.
+
+    ✅ Logos are uploaded and validated (100x100px min, 2MB max).
+
+    ✅ All Companies & Employees CRUD is reused from Task 1.
