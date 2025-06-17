@@ -30,12 +30,11 @@ class CompanyController extends Controller
                         }
                     })
 
-                    // Action buttons from Blade partial
                     ->addColumn('action', function ($row) {
                         return view('companies.buttons.actions', compact('row'))->render();
                     })
 
-                    ->rawColumns(['logo', 'action']) // Allow HTML rendering in these columns
+                    ->rawColumns(['logo', 'action'])
                     ->make(true);
             }
 
@@ -83,7 +82,6 @@ class CompanyController extends Controller
         try {
             DB::beginTransaction();
 
-            // Handle logo upload
             if ($request->hasFile('logo')) {
                 $validated['logo'] = $request->file('logo')->store('logos', 'public');
             }
@@ -159,9 +157,9 @@ class CompanyController extends Controller
 
             $company = Company::findOrFail($id);
 
-            // Handle new logo upload
+            
             if ($request->hasFile('logo')) {
-                // Delete old logo if exists
+                
                 if ($company->logo && Storage::disk('public')->exists($company->logo)) {
                     Storage::disk('public')->delete($company->logo);
                 }
