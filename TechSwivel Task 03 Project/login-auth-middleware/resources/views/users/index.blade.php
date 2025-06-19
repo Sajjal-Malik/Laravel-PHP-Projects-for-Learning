@@ -1,8 +1,16 @@
 @extends('layouts.app')
 
 @section('content')
+
+    @if (session('success'))
+        <div class="alert alert-success" id="success-message">
+            {{ session('success') }}
+        </div>
+    @endif
+
     <div class="container">
         <h2 class="text-white">Users List</h2>
+        <a href="{{ route('users.create')}}" class="btn btn-info float-end mb-2">Add New User</a>
         <table class="table table-bordered" id="users-table">
             <thead>
                 <tr>
@@ -20,51 +28,7 @@
 
 @push('scripts')
     <script>
-        $(function () {
-
-             $.ajaxSetup({
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                }
-            });
-
-            let table = $('#users-table').DataTable({
-                processing: true,
-                serverSide: true,
-                ajax: '{{ route('users.index') }}',
-                columns: [
-                    { data: 'id' },
-                    { data: 'name' },
-                    { data: 'email' },
-                    { data: 'role' },
-                    { data: 'status' },
-                    { data: 'action', orderable: false, searchable: false },
-                ]
-            });
-
-
-            $('#users-table').on('click', '.toggle-status', function () {
-                const userId = $(this).data('id');
-
-                $.ajax({
-                    url: '/users/status/' + userId,
-                    type: 'POST',
-                    data: {
-                        _token: '{{ csrf_token() }}'
-                    },
-                    success: function (res) {
-                        console.log(res.message);
-                        if (res.success) {
-                            table.ajax.reload();
-                        } else {
-                            alert(res.message);
-                        }
-                    },
-                    error: function () {
-                        alert('Something went wrong.');
-                    }
-                });
-            });
-        });
+        const usersIndexUrl = "{{ route('users.index') }}";
     </script>
+    <script type="text/javascript" src="{{ asset('js/script.js') }}"></script>
 @endpush

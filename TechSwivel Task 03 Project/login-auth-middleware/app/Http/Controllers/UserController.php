@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Fortify\CreateNewUser;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Log;
 
@@ -60,6 +62,44 @@ class UserController extends Controller
             Log::error('User block/unblock failed: ' . $e->getMessage());
 
             return response()->json(['success' => false, 'message' => 'Failed to update user status.']);
+        }
+    }
+
+    public function create()
+    {
+        try {
+            return view('auth.register');
+            
+        } catch (\Exception $e) {
+
+            return redirect()->back()->with('error', 'Server Error | Register Page Not Found');
+        }
+    }
+
+    public function store(Request $request)
+    {
+
+        try {
+
+            DB::beginTransaction();
+
+            $newUser = new CreateNewUser();
+
+            $user = $newUser->create($request->only(['name', 'email', 'password', 'password_confirmation']));
+
+            if ($request->has('roles')) {
+                $user->roles()->sync($request->roles);
+            }
+
+            DB::commit();
+
+            return redirect()->route('users.index')->with('success', 'User Created Successfully');
+
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return redirect()->back()->with('error', 'User Could not be Created | Server Error');
         }
     }
 }

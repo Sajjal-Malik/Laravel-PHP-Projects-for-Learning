@@ -14,6 +14,9 @@ class User extends Authenticatable
 
     const ROLE_ADMIN = 1;
     const ROLE_USER = 2;
+
+    const ACTIVE = 1;
+    const NOT_ACTIVE = 0;
     /**
      * The attributes that are mass assignable.
      *
@@ -49,4 +52,3 @@ class User extends Authenticatable
     public const CREATED_AT = 'createdAt';
     public const UPDATED_AT = 'updatedAt';
 }
-

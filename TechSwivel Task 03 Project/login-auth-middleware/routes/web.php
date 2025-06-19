@@ -20,8 +20,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// Auth::routes();
-
 
 Route::middleware(['auth', 'isActive'])->group(function () {
 
@@ -29,6 +27,8 @@ Route::middleware(['auth', 'isActive'])->group(function () {
 
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::post('/users/status/{id}', [UserController::class, 'toggleBlock'])->name('users.toggleBlock');
+        Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
     });
 
     Route::middleware(['role:2'])->group(function () {
