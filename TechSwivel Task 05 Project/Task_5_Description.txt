@@ -1,0 +1,288 @@
+Great! Here's a detailed description of Task 5 based on your setup, previous progress, and new concepts — clearly structured so you can build it step-by-step from scratch.
+
+✅ Task 5: Artisan Custom Commands and Queues — Combined with Task 3 & Task 4
+📦 Core Objectives
+Learn how to:
+    Create custom artisan commands.
+
+    Use Laravel's scheduler for periodic tasks.
+
+    Queue and send emails efficiently.
+
+    Seed realistic fake data (users, companies, employees) with images.
+
+    Refactor everything under the admin route prefix.
+
+    Replace email-based login with username.
+
+    Display data using Yajra DataTables.
+
+
+🧠 Concepts & Features to Learn in This Task
+Feature	Description
+    1. Custom Artisan Command: database:create	A custom command that creates a new MySQL database dynamically from CLI (e.g., php artisan database:create my_db_name).
+    2. Custom Command: db:dump	Another custom artisan command to run migrate:fresh and db:seed in one go, simplifying database refresh.
+    3. Alter status Column	In users table, update the status enum values from (active, inactive) to (Active, Blocked) and update all logic/UI accordingly.
+    4. Factory with File Upload	Generate N fake users, companies, and employees using Laravel factories. Use your existing FileUploadTrait for attaching random logos and photos.
+    5. Route Prefixing	All routes should now be grouped under admin (e.g., /admin/users, /admin/employees). Use Laravel route groups for this.
+    6. Login with Username	Override Laravel Fortify to allow user login with username instead of email. Update login form, config, and authentication logic.
+    7. Queued Mail	Use Laravel Queues to send a welcome mail (via UserCreated) to selected users asynchronously.
+    8. Scheduled Mail Every 24 Hours	Use Laravel Task Scheduling to send queued email to all users every 24 hours. Could be a reminder or a custom notification.
+    9. Yajra DataTables	All lists (users, employees, companies) should now use Yajra DataTables for dynamic, paginated tables with AJAX.
+
+
+🧱 Combined Architecture Summary
+    Area	Description
+    Auth	Laravel Fortify customized to use username field.
+    Middlewares	You correctly use CheckRole as 'role' and CheckBlocked as 'isActive' middleware.
+    Mail/Event	One UserCreated event+mail class handles all user-related mails (no duplication).
+    Uploads	One FileUploadTrait handles both company logos and user photos.
+    DataTables	Use Yajra for users, companies, and employees. Employees are users with role = 2.
+    Project Bootstrapping	New project to be built from scratch, applying all best practices learned so far.
+
+
+🧭 Suggested Order of Development
+    New Laravel Project + AdminLTE UI
+
+    Migrations + Models (with camelCase columns)
+
+    Fortify Setup with Username Login
+
+    Middleware (role, isActive)
+
+    Factory Setup (User, Company, with image using FileUploadTrait)
+
+    Custom Artisan Commands
+
+    database:create
+
+    db:dump
+
+    Event + Listener for UserCreated + Queue Setup
+
+    Schedule Task: Mail All Users Every 24 Hrs
+
+    Seed Fake Records (with images and logos)
+
+    Yajra DataTables for All Lists
+
+    Route Grouping: Route::prefix('admin')->group(...)
+
+
+✅ Your Existing Reusables
+    Component	Already Created
+    FileUploadTrait	✔ (reused for both logos and photos)
+    UserCreated Event & Listener	✔
+    Middleware CheckBlocked, CheckRole	✔ Registered as 'isActive', 'role'
+    Factory + Seeder (users, companies)	✔ (extend to include image upload)
+    Mailtrap Config	✔
+
+🎯 Final Outcome
+    You will build a professional-level Laravel 10 project that:
+
+    Automates database setup and refresh.
+
+    Sends queued, scheduled emails.
+
+    Uses username-based login.
+
+    Displays everything in dynamic DataTables.
+
+    Uses a single unified logic for users and employees.
+
+    Stays clean with Laravel's best practices (traits, services, DI, events, queues, etc).
+
+Let me know when you're ready and I’ll walk you through step-by-step from project creation. You can also try on your own and bring me errors for help.
+
+You said: Make this detail in step by step form and with the flow and show files
+
+✅ Step-by-Step Implementation Guide – Laravel Task 5
+🔰 Step 1: Create New Laravel Project
+bash
+Copy
+Edit
+laravel new task5_project
+cd task5_project
+composer require laravel/fortify
+php artisan vendor:publish --provider="Laravel\Fortify\FortifyServiceProvider"
+php artisan migrate
+
+🛠️ Step 2: Fortify Auth with Username Instead of Email
+🔸 In config/fortify.php
+'username' => 'username', // change from email
+
+
+🔸 In app/Providers/FortifyServiceProvider.php (boot method):
+    Fortify::authenticateUsing(function (Request $request) {
+        $user = User::where('username', $request->username)->first();
+        if ($user && Hash::check($request->password, $user->password)) {
+            return $user;
+        }
+        return null;
+    });
+
+🔸 Update Login Form:
+In resources/views/auth/login.blade.php:
+<input type="text" name="username" required autofocus />
+
+
+🏗️ Step 3: Setup Middleware
+🔸 Middlewares already created:
+    CheckRole → registered as 'role'
+    CheckBlocked → registered as 'isActive'
+
+
+🔸 Register in app/Http/Kernel.php:
+protected $routeMiddleware = [
+    'role' => \App\Http\Middleware\CheckRole::class,
+    'isActive' => \App\Http\Middleware\CheckBlocked::class,
+];
+
+🧬 Step 4: Migrations with CamelCase & Enum Update
+🔸 users migration:
+    $table->enum('status', ['Active', 'Blocked'])->default('Active');
+    $table->string('username')->unique();
+    $table->unsignedTinyInteger('role')->default(2); // 1 = Admin, 2 = User
+
+
+🧪 Step 5: Factories and Seeders with Images (via FileUploadTrait)
+🔸 Trait: app/Traits/FileUploadTrait.php
+    (Already used in your previous project)
+
+
+🔸 Update UserFactory and CompanyFactory to use trait:
+'photo' => $this->uploadFileFromFactory('employee.jpg', 'photos'),
+
+Use logic in factory like:
+    use App\Traits\FileUploadTrait;
+
+    class UserFactory extends Factory
+    {
+        use FileUploadTrait;
+
+        public function definition()
+        {
+            return [
+                'name' => $this->faker->name,
+                'username' => $this->faker->userName,
+                'email' => $this->faker->safeEmail,
+                'status' => 'Active',
+                'role' => 2,
+                'photo' => $this->uploadFileFromFactory('employee.jpg', 'photos'),
+            ];
+        }
+    }
+
+
+🧾 Step 6: Prefix All Routes with /admin
+In routes/web.php:
+Route::prefix('admin')->middleware(['auth', 'isActive', 'role:1'])->group(function () {
+    Route::get('/users', [UserController::class, 'index'])->name('admin.users.index');
+    Route::get('/employees', [EmployeeController::class, 'index'])->name('admin.employees.index');
+    Route::get('/companies', [CompanyController::class, 'index'])->name('admin.companies.index');
+});
+
+
+⚙️ Step 7: Custom Artisan Command – database:create
+🔸 Run:
+php artisan make:command CreateDatabase
+
+🔸 In app/Console/Commands/CreateDatabase.php:
+
+public function handle()
+{
+    $dbName = $this->argument('name');
+
+    config(['database.connections.mysql.database' => null]);
+
+    DB::statement("CREATE DATABASE IF NOT EXISTS `$dbName`");
+    $this->info("Database '$dbName' created successfully!");
+}
+
+
+🔸 In app/Console/Kernel.php register the command:
+    protected $commands = [
+        Commands\CreateDatabase::class,
+    ];
+
+⚙️ Step 8: Custom Command – db:dump
+🔸 Run:
+php artisan make:command DumpDatabase
+
+🔸 In app/Console/Commands/DumpDatabase.php:
+
+    public function handle()
+    {
+        $this->call('migrate:fresh');
+        $this->call('db:seed');
+        $this->info('Database reset and seeded successfully!');
+    }
+
+
+📤 Step 9: Queue Mail Sending to Selected Users
+🔸 Ensure queue is configured:
+    QUEUE_CONNECTION=database
+    php artisan queue:table
+    php artisan migrate
+
+
+🔸 In your controller:
+    event(new UserCreated($user)); // UserCreated should be queued
+
+
+🔸 UserCreated listener:
+    public $queue = 'emails';
+
+Run queue worker:
+    php artisan queue:work
+
+
+⏰ Step 10: Schedule Email to All Users Every 24 Hrs
+🔸 In app/Console/Kernel.php:
+    protected function schedule(Schedule $schedule)
+    {
+        $schedule->call(function () {
+            $users = User::where('status', 'Active')->get();
+            foreach ($users as $user) {
+                Mail::to($user->email)->queue(new UserCreated($user));
+            }
+        })->daily();
+    }
+
+Run the scheduler via:
+php artisan schedule:work
+
+
+📊 Step 11: Yajra DataTables for All Modules
+🔸 Users:
+return DataTables::of(User::query()->where('role', 2))
+    ->addColumn('action', function ($user) {
+        return view('admin.users.partials.actions', compact('user'))->render();
+    })
+    ->make(true);
+Same for Employees and Companies.
+
+
+📁 Folder and File Organization (Simplified)
+    app/
+    ├── Console/
+    │   ├── Commands/
+    │   │   ├── CreateDatabase.php
+    │   │   └── DumpDatabase.php
+    ├── Events/
+    │   └── UserCreated.php
+    ├── Listeners/
+    │   └── SendUserCreatedMail.php
+    ├── Traits/
+    │   └── FileUploadTrait.php
+    database/
+    ├── factories/
+    │   ├── UserFactory.php
+    │   └── CompanyFactory.php
+    routes/
+    └── web.php  (with /admin prefix)
+    resources/views/
+    └── admin/
+        ├── users/
+        ├── employees/
+        └── companies/

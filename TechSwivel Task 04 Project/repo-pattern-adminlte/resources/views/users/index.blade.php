@@ -24,7 +24,8 @@
                     <thead class="bg-light">
                         <tr>
                             <th>ID</th>
-                            <th>Name</th>
+                            <th>First Name</th>
+                            <th>Last Name</th>
                             <th>Email</th>
                             <th>Role</th>
                             <th>Status</th>
@@ -39,8 +40,12 @@
 @endsection
 
 @push('scripts')
+
     <script>
         const usersIndexUrl = "{{ route('users.index') }}";
+        const toggleStatusUrl = "{{ url('users/status') }}";
     </script>
+
     <script src="{{ asset('js/user-script.js') }}"></script>
+
 @endpush

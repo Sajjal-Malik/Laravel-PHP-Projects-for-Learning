@@ -10,7 +10,7 @@ class LoginResponse implements LoginResponseContract
     {
         $user = Auth::user();
 
-        $redirectUrl = $user->role == 1 ? '/dashboard' : '/home';
+        $redirectUrl = $user->role == 1 ? '/dashboard' : '/';
 
         return redirect()->intended($redirectUrl);
     }

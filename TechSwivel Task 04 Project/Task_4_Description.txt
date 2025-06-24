@@ -1,201 +1,246 @@
-🧠 PROJECT FLOW & FILE STRUCTURE
-🔐 1. Authentication System (Fortify) – Task 3
-📂 Related Files:
-    routes/web.php
+# Laravel Project Task 3 & 4: Full Detailed Description & Implementation Flow
 
-    app/Providers/FortifyServiceProvider.php
+## Combined Objectives:
 
-    app/Http/Controllers/Auth/LoginController.php (if extended manually)
+This documentation explains the **combined goals, implementation steps, file structure, and logic** for **Task 3: User Auth, Middleware, and Company/Employee Management** and **Task 4: Repository Pattern, Dependency Injection, and AdminLTE Theme**.
 
-    resources/views/auth/login.blade.php
+---
 
-    resources/views/auth/register.blade.php
+## 🧩 Project Overview
 
-Flow:
+### 🛠️ Technologies and Packages Used:
 
-    Fortify handles login, registration, forgot/reset password routes.
+    * Laravel 10
+    * Laravel Fortify for Authentication
+    * Yajra DataTables for server-side table rendering
+    * AdminLTE Theme (for UI)
+    * jQuery + AJAX + Parsley.js (for frontend interaction + validation)
+    * Mailtrap (for testing email notifications)
+    * Repository Pattern + Dependency Injection (for service abstraction)
+    * Event & Listener (for sending emails)
+    * Traits for File Uploads
 
-    You override the views by publishing Fortify and customizing them.
+---
 
-    Middleware (auth, isActive, checkRole) ensures only valid users can access protected routes.
+## 🗂️ Database Tables:
 
+### `users` Table (Merged Admin and Employees)
 
-👤 2. User Role & Blocking – Task 3
-📂 Related Files:
-    app/Http/Middleware/CheckBlocked.php
+| Column    | Type          | Description                           |
+| --------- | ------------- | ------------------------------------- |
+| id        | bigIncrements | Primary Key                           |
+| firstName | string        | First Name of user/employee           |
+| lastName  | string        | Last Name of user/employee            |
+| email     | string        | Unique Email                          |
+| password  | string        | Hashed Password                       |
+| role      | tinyInteger   | 1 = Admin, 2 = Employee               |
+| isBlocked | boolean       | 0 = Active, 1 = Blocked               |
+| empPhoto  | string        | (nullable) Employee Photo path        |
+| companyId | foreignId     | (nullable for Admins) FK to companies |
+| createdAt | timestamp     | Created time                          |
+| updatedAt | timestamp     | Updated time                          |
 
-    app/Http/Middleware/CheckRole.php
+### `companies` Table
 
-    app/Http/Controllers/UserController.php
+| Column  | Type          | Description                    |
+| ------- | ------------- | ------------------------------ |
+| id      | bigIncrements | Primary Key                    |
+| name    | string        | Required                       |
+| email   | string        | Optional                       |
+| website | string        | Optional                       |
+| logo    | string        | Stored in `storage/app/public` |
 
-    resources/views/users/index.blade.php
+---
 
-Flow:
+## 📁 Folder & File Structure
 
-    Admin = 1, User = 2
+### Models
 
-    Middleware checks if a user is blocked (isBlocked field).
+    * `App\Models\User`
+    * `App\Models\Company`
 
-    Admin has toggle block/unblock buttons in the listing using AJAX.
+### Migrations & Seeders and Factory
 
+    * `create_users_table.php`
+    * `create_companies_table.php`
+    * `UserFactory.php`
+    * `CompanyFactory.php`
+    * `UserSeeder.php`
+    * `CompanySeeder.php`
 
-🏢 3. Company Module (CRUD + Logo Upload) – Task 3 & 4
-📂 Related Files:
-    app/Http/Controllers/CompanyController.php
+### Middleware
 
-    app/Repositories/Eloquent/CompanyRepository.php
+* `CheckBlocked.php`: blocks login if user is inactive
+* `CheckRole.php`: handles multiple role-based route protections
 
-    app/Repositories/Interfaces/CompanyRepositoryInterface.php
 
-    app/Http/Requests/CompanyRequest.php
+### Middleware Register: (app/Http/Kernel.php)
+        'role' => \App\Http\Middleware\CheckRole::class,
+        'isActive' => \App\Http\Middleware\CheckBlocked::class,
 
-    app/Traits/FileUploadTrait.php
+### Routes (`routes/web.php`)
 
-    resources/views/companies/*.blade.php
+```php
+Route::middleware(['auth', 'isActive'])->group(function () {
 
-Flow:
+    Route::middleware(['role:1'])->group(function () {
 
-    Company form validates logo (min 100x100, max 2MB).
+        Route::get('/dashboard', function () {
+            return view('dashboard');
+        })->name('dashboard');
 
-    FileUploadTrait handles logo store/delete.
+        
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::post('/users/status/{id}', [UserController::class, 'toggleBlock'])->name('users.toggleBlock');
+        Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
 
-    Stored in storage/app/public/company-logos
+        
+        Route::get('/companies', [CompanyController::class, 'index'])->name('companies.index');
+        Route::get('/companies/create', [CompanyController::class, 'create'])->name('companies.create');
+        Route::post('/companies', [CompanyController::class, 'store'])->name('companies.store');
+        Route::get('/companies/{id}', [CompanyController::class, 'show'])->name('companies.show');
+        Route::get('/companies/{id}/edit', [CompanyController::class, 'edit'])->name('companies.edit');
+        Route::put('/companies/{id}', [CompanyController::class, 'update'])->name('companies.update');
+        Route::delete('/companies/{id}', [CompanyController::class, 'destroy'])->name('companies.destroy');
 
-    Shown using: asset('storage/' . $company->logo)
+        
+        Route::get('/employees', [UserController::class, 'employeeIndex'])->name('employees.index');
+        Route::get('/employees/create', [UserController::class, 'employeeCreate'])->name('employees.create');
+        Route::post('/employees', [UserController::class, 'employeeStore'])->name('employees.store');
+        Route::get('/employees/{id}', [UserController::class, 'employeeShow'])->name('employees.show');
+        Route::get('/employees/{id}/edit', [UserController::class, 'employeeEdit'])->name('employees.edit');
+        Route::put('/employees/{id}', [UserController::class, 'employeeUpdate'])->name('employees.update');
+        Route::delete('/employees/{id}', [UserController::class, 'employeeDestroy'])->name('employees.destroy');
+    });
+});
+```
 
-    Uses DB transactions and try-catch.
+### Fortify Setup
 
+* Customized `FortifyServiceProvider` to override login and registration logic
+* Uses `CreateNewUser` to Validate and create user using Fortify's structure
 
-👨‍💼 4. Employee Module (CRUD + Photo + Email) – Task 4
-📂 Related Files:
-    app/Http/Controllers/EmployeeController.php
+### Controllers
 
-    app/Repositories/Eloquent/EmployeeRepository.php
+* `UserController.php`: Handles both Admin-created users and Employees
+* `CompanyController.php`: Full CRUD for company module
 
-    app/Repositories/Interfaces/EmployeeRepositoryInterface.php
+### Views
 
-    app/Http/Requests/EmployeeRequest.php
+* `layouts/app.blade.php` (AdminLTE based)
+* `auth/login.blade.php`
+* `auth/register.blade.php`
+* `users/index.blade.php` (user listing)
+* `users/employees/index.blade.php`, `create.blade.php`, etc.
+* `companies/index.blade.php`, `create.blade.php`, etc.
 
-    app/Traits/PhotoUploadTrait.php
+### Repositories
+#### Repositories/Interfaces
 
-    app/Mail/EmployeeCreatedMail.php
+* `UserRepositoryInterface`
+* `CompanyRepositoryInterface`
 
-    resources/views/employees/*.blade.php
+#### Repositories/Repository
 
-    resources/views/emails/employee_created.blade.php
+* `UserRepository.php`
+  * create user using Fortify's `CreateNewUser`
+  * handle employee photo uploads via `FileUploadTrait`
+  * toggle block/unblock status
 
-Flow:
+* `CompanyRepository.php`
+  * handle logo uploads via `FileUploadTrait`
 
-    Employee photo optional, stored via PhotoUploadTrait
+### Traits
 
-    After creation, sends mail to admin using Mail::to()->send()
+* `FileUploadTrait.php`: used by `CompanyRepository, UserRepository`
 
-    View is well-designed HTML email
+### Event & Listener
 
-    Uses DB::beginTransaction(), commit, rollback
+* `UserCreated.php`
+* `SendNewUserEmail.php`
 
+* Email template: `resources/views/emails/users_created.blade.php`
 
-📬 5. User Created Event + Listener + Email – Task 4
-📂 Related Files:
-    app/Events/UserCreated.php
+### Mailtrap
 
-    app/Listeners/SendUserCreatedMail.php
+Configured in `.env`:
 
-    app/Mail/UserCreatedMail.php
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.mailtrap.io
+MAIL_PORT=2525
+MAIL_USERNAME=your_username
+MAIL_PASSWORD=your_password
+```
 
-    resources/views/emails/user_created.blade.php
+---
 
-Flow:
+## 🧪 Seeder Setup
 
-After new user is created (in UserController or repository):
+### `UserSeeder.php`
 
-    $user = $this->userRepo->store($data);
-    event(new UserCreated($user));
+* Creates 1 Super Admin manually
+* Creates 10 Employees with factory and links them to first available company
 
-    Listener sends email using Mail::to()->send(new UserCreatedMail($user));
+### `CompanySeeder.php`
 
+* Creates a default company with a logo
 
-🖼️ 6. AdminLTE Theme Integration – Task 4
-📂 Related Files:
-    resources/views/layouts/app.blade.php
+---
 
-    resources/views/partials/navbar.blade.php
+## 🔐 Middleware Logic Flow
 
-    resources/views/partials/footer.blade.php
+    1. All protected routes are behind `auth` middleware
+    2. `check.admin` checks if the logged-in user is an admin
+    3. `role:1` ensures only Admin can access employee/user/company management
+    4. `CheckBlocked` prevents blocked users from accessing login session
 
-    resources/views/partials/sidebar.blade.php
+---
 
-    Assets in: public/adminlte/*
+## 📬 Email Notifications
 
-Flow:
+* When a user or employee is created, `UserCreated` event is fired.
+* `SendNewUserEmail` listener sends email using Laravel Mailable.
 
-    Navbar includes logo and links like Login/Register/Logout.
+---
 
-    Sidebar only visible to authenticated + unblocked users.
+## ⚙️ DataTables Integration
 
-    Layout handles different roles cleanly.
+* Used for all listings: `users`, `employees`, `companies`
+* Server-side rendering via Yajra DataTables in controller index methods
+* AJAX route returns formatted table data
 
+---
 
-🧪 7. Validation (Frontend + Backend) – Task 4
-📂 Related Files:
-    resources/views/companies/create.blade.php (or edit)
+## 🧠 Best Practices Followed
 
-    resources/views/employees/create.blade.php
+* Clean separation of concerns using Repository Pattern
+* Single controller (`UserController`) used for both admin users and employees
+* Blade layouts follow AdminLTE structure
+* Validation on both frontend (Parsley.js) and backend (Form Requests / Fortify)
+* Secure password storage and user registration using Fortify
+* Email notifications handled using Laravel Event & Listener
+* File uploads handled using Traits
+* Custom error handling and logs for each catch block
 
-    JS validation: Parsley.js or native HTML5
+---
 
-    Server-side: CompanyRequest.php, EmployeeRequest.php
+## ✅ Final Deliverables Summary
 
-Example Rule:
+| Module       | Path / Feature                      |
+| ------------ | ----------------------------------- |
+| Auth         | Login, Register (Fortify)           |
+| Middleware   | Auth, Role, Blocked checks          |
+| User Manage  | CRUD (Admin), Toggle Block (AJAX)   |
+| Employees    | CRUD via UserController (role = 2)  |
+| Companies    | CRUD, Logo Upload                   |
+| Repositories | User + Company abstraction layers   |
+| Events/Email | On user/employee creation           |
+| DataTables   | Server-side listing                 |
+| UI           | AdminLTE UI Integration             |
+| Seeder       | Admin + Employees + Default Company |
 
-    'logo' => 'nullable|image|dimensions:min_width=100,min_height=100|max:2048'
+---
 
-
-📊 8. Yajra DataTables for Listing – Task 3 & 4
-📂 Related Files:
-    resources/views/companies/index.blade.php
-
-    resources/views/employees/index.blade.php
-
-    resources/views/users/index.blade.php
-
-    JS scripts for DataTables
-
-    Controller returns DataTables::of($data)->make(true)
-
-
-🌱 9. Seeding + Factory for Default Data – Task 4
-📂 Related Files:
-    database/seeders/CompanySeeder.php
-
-    database/seeders/EmployeeSeeder.php
-
-    database/factories/CompanyFactory.php
-
-    database/factories/EmployeeFactory.php
-
-Command to seed:
-
-    php artisan db:seed
-
-
-🔧 ROUTES SUMMARY
-Module	Endpoint	Description
-    Auth	/login, /register, /logout, /forgot-password	Fortify routes
-    Users	/users, /user/status (POST)	Admin listing with block/unblock
-    Companies	/companies, /companies/create, /companies/{id}/edit, /companies/{id} (PUT/DELETE)	Full CRUD
-    Employees	/employees, /employees/create, /employees/{id}/edit, /employees/{id} (PUT/DELETE)	Full CRUD
-
-
-✅ Summary Checkpoints
-    Feature	Included?
-    Fortify-based login/logout/register	✅
-    Role-based access (Admin/User)	✅
-    Middleware: auth + isActive + checkRole	✅
-    Company Logo Upload	✅
-    Email Notification: Employee + User creation	✅
-    Trait-based File Upload handling	✅
-    Repository Pattern + Dependency Injection	✅
-    Yajra DataTables with AJAX	✅
-    Factories + Seeders	✅
-    AdminLTE theme with layout	✅
+Let me know if you'd like this documented as a project README, PDF, or further expanded into tutorials for each file/module.

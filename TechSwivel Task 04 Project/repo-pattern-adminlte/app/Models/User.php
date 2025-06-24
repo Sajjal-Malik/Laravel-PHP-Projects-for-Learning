@@ -15,8 +15,8 @@ class User extends Authenticatable
     const ROLE_ADMIN = 1;
     const ROLE_USER = 2;
 
-    const UNBLOCKED = 0;
     const BLOCKED = 1;
+    const UNBLOCKED = 0;
 
     public const CREATED_AT = 'createdAt';
     public const UPDATED_AT = 'updatedAt';
@@ -27,8 +27,12 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-        'name',
+        'firstName',
+        'lastName',
+        'companyId',
         'email',
+        'empPhoto',
+        'phone',
         'password',
         'role',
         'isBlocked',
@@ -52,4 +56,9 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class, 'companyId');
+    }
 }

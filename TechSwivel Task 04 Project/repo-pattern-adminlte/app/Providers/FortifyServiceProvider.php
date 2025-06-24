@@ -18,6 +18,7 @@ use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
 use Laravel\Fortify\Fortify;
 
 use Illuminate\Validation\ValidationException;
+
 class FortifyServiceProvider extends ServiceProvider
 {
     /**
@@ -51,6 +52,7 @@ class FortifyServiceProvider extends ServiceProvider
 
 
 
+
         Fortify::loginView(function () {
 
             return view('auth.login');
@@ -58,19 +60,14 @@ class FortifyServiceProvider extends ServiceProvider
 
 
         Fortify::authenticateUsing(function ($request) {
-
             $user = User::where('email', $request->email)->first();
 
             if ($user && Hash::check($request->password, $user->password)) {
-
                 if ($user->isBlocked == User::BLOCKED) {
-
                     throw ValidationException::withMessages([
-                        
                         Fortify::username() => ['This User is BLOCKED, Contact ADMIN'],
                     ]);
                 }
-
                 return $user;
             }
 

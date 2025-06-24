@@ -15,9 +15,9 @@ class CompanySeeder extends Seeder
      */
     public function run(): void
     {
-        DB::beginTransaction();
-
+        
         try {
+            DB::beginTransaction();
 
             Company::factory()->create([
                 'name' => 'Tech Innovations',

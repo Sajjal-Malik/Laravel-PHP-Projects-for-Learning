@@ -5,8 +5,8 @@ namespace App\Listeners;
 use App\Events\UserCreated;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
-use App\Mail\UserCreatedMail;
 use Illuminate\Support\Facades\Mail;
+use App\Mail\UserCreatedMail;
 
 class SendUserCreatedNotification
 {

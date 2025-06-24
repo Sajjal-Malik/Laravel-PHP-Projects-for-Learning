@@ -14,15 +14,21 @@
                         <div class="card-body">
                             <p class="lead">Welcome, {{ auth()->user()->name }}!</p>
 
-                            {{-- <p>You have full access to the system. You can manage:</p> --}}
+                            <p>You have full access to the system. You can manage:</p>
                             <ul>
                                 <li><strong>Users</strong> — View, create, block/unblock users</li>
-                                {{-- <li><strong>Companies</strong> — Add/edit company details and logos</li> --}}
-                                {{-- <li><strong>Employees</strong> — Manage employee information</li> --}}
+                                <li><strong>Companies</strong> — Add/edit company details and logos</li>
+                                <li><strong>Employees</strong> — Manage employee information</li>
                             </ul>
 
                             <a href="{{ route('users.index') }}" class="btn btn-outline-primary">
                                 Go to User Management
+                            </a>
+                            <a href="{{ route('companies.index') }}" class="btn btn-outline-secondary">
+                                Go to Company Management
+                            </a>
+                            <a href="{{ route('employees.index') }}" class="btn btn-outline-success">
+                                Go to Employee Management
                             </a>
                         </div>
                     </div>

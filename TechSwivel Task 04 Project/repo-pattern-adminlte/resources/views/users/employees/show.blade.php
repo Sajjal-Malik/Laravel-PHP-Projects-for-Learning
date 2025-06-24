@@ -3,8 +3,13 @@
 @section('title', 'View Employee')
 
 @section('content')
+<div class="container mt-4">
+
     <div class="card">
-        <div class="card-header">Employee Details</div>
+        <div class="card-header">
+            <h5 class="mb-0">Employee Details</h5>
+        </div>
+
         <div class="card-body">
             <dl class="row">
                 <dt class="col-sm-3">First Name</dt>
@@ -25,11 +30,14 @@
                 @if ($employee->empPhoto)
                     <dt class="col-sm-3">Photo</dt>
                     <dd class="col-sm-9">
-                        <img src="{{ asset('storage/' . $employee->empPhoto) }}" alt="Employee Photo" width="120">
+                        <img src="{{ asset('storage/' . $employee->empPhoto) }}" alt="Employee Photo" width="120" class="img-thumbnail">
                     </dd>
                 @endif
             </dl>
+
             <a href="{{ route('employees.index') }}" class="btn btn-secondary">Back to List</a>
         </div>
     </div>
+
+</div>
 @endsection

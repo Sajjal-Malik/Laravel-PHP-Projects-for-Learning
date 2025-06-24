@@ -22,7 +22,7 @@ class EventServiceProvider extends ServiceProvider
         ],
         UserCreated::class => [
             SendUserCreatedNotification::class,
-        ]
+        ],
     ];
 
     /**

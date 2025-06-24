@@ -25,7 +25,7 @@ class CheckBlocked
 
             auth()->logout();
 
-            return redirect()->route('login')->withErrors(['email' => 'This User is BLOCKED, Contact ADMIN']);
+            return redirect()->route('login')->withErrors(['email' => 'This User is BLOCKED, Contact SUPER ADMIN']);
         }
 
         return $next($request);
