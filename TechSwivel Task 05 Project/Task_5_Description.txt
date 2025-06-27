@@ -96,172 +96,6 @@ Let me know when you're ready and I’ll walk you through step-by-step from proj
 
 You said: Make this detail in step by step form and with the flow and show files
 
-✅ Step-by-Step Implementation Guide – Laravel Task 5
-🔰 Step 1: Create New Laravel Project
-bash
-Copy
-Edit
-laravel new task5_project
-cd task5_project
-composer require laravel/fortify
-php artisan vendor:publish --provider="Laravel\Fortify\FortifyServiceProvider"
-php artisan migrate
-
-🛠️ Step 2: Fortify Auth with Username Instead of Email
-🔸 In config/fortify.php
-'username' => 'username', // change from email
-
-
-🔸 In app/Providers/FortifyServiceProvider.php (boot method):
-    Fortify::authenticateUsing(function (Request $request) {
-        $user = User::where('username', $request->username)->first();
-        if ($user && Hash::check($request->password, $user->password)) {
-            return $user;
-        }
-        return null;
-    });
-
-🔸 Update Login Form:
-In resources/views/auth/login.blade.php:
-<input type="text" name="username" required autofocus />
-
-
-🏗️ Step 3: Setup Middleware
-🔸 Middlewares already created:
-    CheckRole → registered as 'role'
-    CheckBlocked → registered as 'isActive'
-
-
-🔸 Register in app/Http/Kernel.php:
-protected $routeMiddleware = [
-    'role' => \App\Http\Middleware\CheckRole::class,
-    'isActive' => \App\Http\Middleware\CheckBlocked::class,
-];
-
-🧬 Step 4: Migrations with CamelCase & Enum Update
-🔸 users migration:
-    $table->enum('status', ['Active', 'Blocked'])->default('Active');
-    $table->string('username')->unique();
-    $table->unsignedTinyInteger('role')->default(2); // 1 = Admin, 2 = User
-
-
-🧪 Step 5: Factories and Seeders with Images (via FileUploadTrait)
-🔸 Trait: app/Traits/FileUploadTrait.php
-    (Already used in your previous project)
-
-
-🔸 Update UserFactory and CompanyFactory to use trait:
-'photo' => $this->uploadFileFromFactory('employee.jpg', 'photos'),
-
-Use logic in factory like:
-    use App\Traits\FileUploadTrait;
-
-    class UserFactory extends Factory
-    {
-        use FileUploadTrait;
-
-        public function definition()
-        {
-            return [
-                'name' => $this->faker->name,
-                'username' => $this->faker->userName,
-                'email' => $this->faker->safeEmail,
-                'status' => 'Active',
-                'role' => 2,
-                'photo' => $this->uploadFileFromFactory('employee.jpg', 'photos'),
-            ];
-        }
-    }
-
-
-🧾 Step 6: Prefix All Routes with /admin
-In routes/web.php:
-Route::prefix('admin')->middleware(['auth', 'isActive', 'role:1'])->group(function () {
-    Route::get('/users', [UserController::class, 'index'])->name('admin.users.index');
-    Route::get('/employees', [EmployeeController::class, 'index'])->name('admin.employees.index');
-    Route::get('/companies', [CompanyController::class, 'index'])->name('admin.companies.index');
-});
-
-
-⚙️ Step 7: Custom Artisan Command – database:create
-🔸 Run:
-php artisan make:command CreateDatabase
-
-🔸 In app/Console/Commands/CreateDatabase.php:
-
-public function handle()
-{
-    $dbName = $this->argument('name');
-
-    config(['database.connections.mysql.database' => null]);
-
-    DB::statement("CREATE DATABASE IF NOT EXISTS `$dbName`");
-    $this->info("Database '$dbName' created successfully!");
-}
-
-
-🔸 In app/Console/Kernel.php register the command:
-    protected $commands = [
-        Commands\CreateDatabase::class,
-    ];
-
-⚙️ Step 8: Custom Command – db:dump
-🔸 Run:
-php artisan make:command DumpDatabase
-
-🔸 In app/Console/Commands/DumpDatabase.php:
-
-    public function handle()
-    {
-        $this->call('migrate:fresh');
-        $this->call('db:seed');
-        $this->info('Database reset and seeded successfully!');
-    }
-
-
-📤 Step 9: Queue Mail Sending to Selected Users
-🔸 Ensure queue is configured:
-    QUEUE_CONNECTION=database
-    php artisan queue:table
-    php artisan migrate
-
-
-🔸 In your controller:
-    event(new UserCreated($user)); // UserCreated should be queued
-
-
-🔸 UserCreated listener:
-    public $queue = 'emails';
-
-Run queue worker:
-    php artisan queue:work
-
-
-⏰ Step 10: Schedule Email to All Users Every 24 Hrs
-🔸 In app/Console/Kernel.php:
-    protected function schedule(Schedule $schedule)
-    {
-        $schedule->call(function () {
-            $users = User::where('status', 'Active')->get();
-            foreach ($users as $user) {
-                Mail::to($user->email)->queue(new UserCreated($user));
-            }
-        })->daily();
-    }
-
-Run the scheduler via:
-php artisan schedule:work
-
-
-📊 Step 11: Yajra DataTables for All Modules
-🔸 Users:
-return DataTables::of(User::query()->where('role', 2))
-    ->addColumn('action', function ($user) {
-        return view('admin.users.partials.actions', compact('user'))->render();
-    })
-    ->make(true);
-Same for Employees and Companies.
-
 
 📁 Folder and File Organization (Simplified)
     app/
@@ -286,3 +120,237 @@ Same for Employees and Companies.
         ├── users/
         ├── employees/
         └── companies/
+
+
+
+
+✅ Task 5: Artisan Custom Commands and Queues — Combined with Task 3 & Task 4 (Initializing)
+1 . Kick-start the project
+    laravel new task5_project
+    cd task5_project
+
+# Auth kit
+    composer require laravel/fortify
+    php artisan vendor:publish --provider="Laravel\\Fortify\\FortifyServiceProvider"
+
+# DataTables (server-side)
+    composer require yajra/laravel-datatables-oracle:"~10.0"
+
+# Queue table
+    php artisan queue:table
+    php artisan migrate
+
+
+2 . Users table & auth tweaks
+2-a Migration – users
+    php artisan make:migration modify_users_for_task5 --table=users
+
+    // database/migrations/xxxx_xx_xx_modify_users_for_task5.php
+    public function up()
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('username')->unique()->after('id');
+            $table->enum('status', ['Active', 'Blocked'])->default('Active')->change();
+            $table->unsignedTinyInteger('role')->default(2)->after('status');    // 1=Admin, 2=User/Employee
+            $table->string('photo')->nullable()->after('email');                // handled by FileUploadTrait
+        });
+    }
+
+    php artisan migrate
+
+
+2-b Fortify → username login
+// config/fortify.php
+    'username' => 'username',
+
+    // app/Providers/FortifyServiceProvider.php  (inside boot)
+        Fortify::authenticateUsing(function (Request $request) {
+            $user = User::where('username', $request->username)->first();
+            return ($user && Hash::check($request->password, $user->password)) ? $user : null;
+        });
+
+Reference: username-based login pattern is unchanged since L10 — see community guides. 
+geoamins.com
+
+Update resources/views/auth/login.blade.php to use a username <input> instead of email.
+
+
+3 . Global middlewares (already written)
+// app/Http/Kernel.php
+'role'     => \App\Http\Middleware\CheckRole::class,
+'isActive' => \App\Http\Middleware\CheckBlocked::class,
+No code change needed – just keep them.
+
+
+4 . One FileUploadTrait for all images
+// app/Traits/FileUploadTrait.php
+namespace App\Traits;
+
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+
+    trait FileUploadTrait
+    {
+        public function uploadFile(?UploadedFile $file, string $folder): ?string
+        {
+            if (!$file) {
+                return null;
+            }
+            $path = $file->store("public/$folder");
+            return basename($path);        // store filename only
+        }
+
+        /** Helper for factories (copy stub images from database/factories/images/) */
+        protected function uploadFileFromFactory(string $stubFile, string $folder): string
+        {
+            $tmp = Storage::disk('public')->putFileAs(
+                $folder,
+                database_path("factories/images/$stubFile"),
+                uniqid() . '_' . $stubFile
+            );
+            return basename($tmp);
+        }
+    }
+
+
+5 . Factories & seeders with images
+    php artisan make:factory UserFactory --model=User
+    php artisan make:factory CompanyFactory
+
+// database/factories/UserFactory.php
+    class UserFactory extends Factory
+    {
+        use FileUploadTrait;
+
+        public function definition()
+        {
+            return [
+                'firstName'     => $this->faker->firstName,
+                'lastName'     => $this->faker->lastName,
+                'username' => $this->faker->unique()->userName,
+                'email'    => $this->faker->safeEmail,
+                'password' => bcrypt('password'),
+                'status'   => 'Active',
+                'role'     => 2,
+                'photo'    => $this->uploadFileFromFactory('user.jpg', 'photos'),
+            ];
+        }
+    }
+Add 1 admin + N dummy users in DatabaseSeeder.
+
+
+6 . Route prefix /admin
+// routes/web.php
+    Route::prefix('admin')->middleware(['auth', 'isActive'])->group(function () {
+        Route::middleware('role:1')->group(function () {
+            Route::resource('users',     Admin\UserController::class);
+            Route::resource('companies', Admin\CompanyController::class);
+            // employees = users where role=2 → handled in UserController
+        });
+    });
+
+
+7 . Custom artisan commands
+7-a Create database
+    php artisan make:command CreateDatabase
+
+// app/Console/Commands/CreateDatabase.php
+    protected $signature = 'database:create {name}';
+    public function handle()
+    {
+        $name = $this->argument('name');
+        config(['database.connections.mysql.database' => null]);      // detach
+        DB::statement("CREATE DATABASE IF NOT EXISTS `$name`");
+        $this->info("Database [$name] created.");
+    }
+
+
+7-b Fresh + seed in one go
+    php artisan make:command dbDump
+
+    protected $signature = 'db:dump';
+    public function handle()
+    {
+        $this->call('migrate:fresh', ['--seed' => true]);
+        $this->info('DB migrated & seeded.');
+    }
+
+Register both in app/Console/Kernel.php.
+Laravel’s docs on writing commands remain unchanged. 
+laravel.com
+
+
+8 . Queue setup & UserCreated event
+    .env: QUEUE_CONNECTION=database
+
+Run:
+    php artisan queue:table && php artisan migrate
+    php artisan queue:work
+
+Event & listener
+php artisan make:event UserCreated
+php artisan make:listener SendUserCreatedMail
+
+// app/Listeners/SendUserCreatedMail.php
+class SendUserCreatedMail implements ShouldQueue
+{
+    public function handle(UserCreated $event)
+    {
+        Mail::to($event->user->email)->queue(new UserCreatedMail($event->user));
+    }
+}
+
+Laravel queue + mail is the same flow shown in tutorials. 
+laraveldaily.com
+
+Trigger the event wherever you create a user (UserRepository::store, factory seeder, etc.).
+
+9 . Scheduler – mail every 24 h
+// app/Console/Kernel.php
+    protected function schedule(Schedule $schedule)
+    {
+        $schedule->call(function () {
+            User::where('status', 'Active')->chunkById(100, function ($users) {
+                foreach ($users as $u) {
+                    Mail::to($u->email)->queue(new UserCreatedMail($u));
+                }
+            });
+        })->daily();   // midnight by default
+    }
+
+Run the scheduler:
+    php artisan schedule:work      # local
+
+# or setup cron: * * * * * php /path/to/artisan schedule:run >> /dev/null 2>&1
+Daily scheduled queue pattern is standard. 
+stackoverflow.com
+
+
+10 . Yajra DataTables stubs
+// app/Http/Controllers/Admin/UserController.php
+public function index(Request $request)
+{
+    if ($request->ajax()) {
+        $query = User::query();
+        return DataTables::of($query)
+            ->addColumn('action', fn($u) => view('admin.users.partials.action', compact('u')))
+            ->make(true);
+    }
+    return view('admin.users.index');
+}
+resources/views/admin/users/index.blade.php just holds <table id="users-table"> and DataTable JS.
+
+11 . Run it all
+
+# Create a DB quickly
+    php artisan database:create task5_db
+
+# .env → DB_DATABASE=task5_db, run migrations/seeds
+    php artisan db:dump             # fresh + seed
+
+# Start queues & scheduler (in two terminals)
+    php artisan queue:work
+    php artisan schedule:work
+
+# Serve app
+    php artisan serve
