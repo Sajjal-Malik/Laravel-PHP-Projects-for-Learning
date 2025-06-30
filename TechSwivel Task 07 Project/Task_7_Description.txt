@@ -1,0 +1,211 @@
+✅ Project Overview (What you will build)
+You’re creating:
+    Admin panel (blade UI) using Laravel Fortify for login.
+    REST API using Laravel Sanctum for:
+    User registration/login with Firebase Auth
+    Protected profile endpoint
+    JWT token handling
+    Password reset via API
+    Post & Comment CRUD via API
+    Yajra DataTable for admin panel
+    Telescope integration
+    Event-based email with queue for welcome email
+
+
+🔧 Step-by-Step Breakdown
+Step 1: Project Setup
+
+    composer create-project laravel/laravel task_7_api_auth
+    cd task_7_api_auth
+
+Install dependencies:
+    composer require laravel/fortify laravel/sanctum laravel/telescope
+    php artisan vendor:publish --provider="Laravel\Fortify\FortifyServiceProvider"
+    php artisan vendor:publish --provider="Laravel\Telescope\TelescopeServiceProvider"
+    php artisan telescope:install
+    php artisan migrate
+
+Step 2: Configure Fortify
+Configure login using Fortify for admin login (UI-based).
+Enable Fortify features: login, register, reset password.
+
+Edit config/fortify.php:
+'features' => [
+    Features::registration(),
+    Features::resetPasswords(),
+    Features::emailVerification(),
+],
+
+Create views (optional):
+php artisan make:auth
+
+Step 3: Admin Seeder & Dashboard (Sub-task 7.1)
+Create Admin Seeder
+    php artisan make:seeder AdminUserSeeder
+
+Inside AdminUserSeeder:
+public function run()
+{
+    \App\Models\User::create([
+        'firstName' => 'Admin',
+        'lastName' => 'User',
+        'email' => 'admin@example.com',
+        'password' => bcrypt('password'),
+        'role' => 1
+    ]);
+}
+
+Run it:
+    php artisan db:seed --class=AdminUserSeeder
+
+Create Admin Dashboard Controller + Route
+Route: /admin/dashboard
+
+Show:
+    Total users
+    Total posts
+    Total comments
+
+In controller:
+public function index()
+{
+    return view('admin.dashboard', [
+        'totalUsers' => User::count(),
+        'totalPosts' => Post::count(),
+        'totalComments' => Comment::count(),
+    ]);
+}
+Step 4: Telescope Setup
+In app/Providers/TelescopeServiceProvider.php:
+protected function gate()
+{
+    Gate::define('viewTelescope', function ($user) {
+        return in_array($user->email, [
+            'admin@example.com',
+        ]);
+    });
+}
+Add TelescopeServiceProvider in config/app.php (if not auto added)
+Visit /telescope
+
+
+Step 5: Sanctum & API Auth (Sub-task 7.2)
+Sanctum Setup
+    composer require laravel/sanctum
+    php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
+    php artisan migrate
+
+In config/auth.php, set:
+'guards' => [
+    'sanctum' => [
+        'driver' => 'sanctum',
+        'provider' => 'users',
+    ],
+],
+
+API Routes in routes/api.php
+Route::post('/signup', [AuthController::class, 'register']);
+Route::post('/signin', [AuthController::class, 'login']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/users/profile', [AuthController::class, 'profile']);
+});
+
+AuthController Logic
+register() → validate → create user → create Firebase user → return token + profile
+
+login() → check credentials → return token
+
+profile() → return user (if token exists)
+
+Step 6: Firebase Integration (register)
+    Install SDK or use REST API with Guzzle:
+
+
+composer require kreait/firebase-php
+Firebase on user register:
+Create new Firebase user using Firebase SDK or REST
+Use try/catch
+    Wrap logic in DB::beginTransaction() and commit()/rollBack()
+
+Step 7: Welcome Email via Queue
+Event & Listener
+    php artisan make:event UserRegistered
+    php artisan make:listener SendWelcomeEmail --event=UserRegistered
+Trigger event in register() after user created.
+Dispatch queue in listener, send mail.
+
+
+Set up queue:
+    php artisan queue:table
+    php artisan migrate
+    php artisan queue:work
+
+Step 8: Forget Password API
+API Endpoints:
+/forget-password → send OTP to email
+/verify → verify OTP
+/reset-password → reset with valid OTP
+
+Create ForgetPasswordController, handle logic with token-based table (or custom logic with OTP).
+
+Step 9: API Resources and Response
+Use UserResource or PostResource to structure API output.
+
+php artisan make:resource UserResource
+In controller:
+return new UserResource($user); // Status 200
+On registration:
+return response()->json(new UserResource($user), 201);
+
+
+Step 10: Post & Comment Modules (Sub-task 7.3)
+Migrations
+php artisan make:model Post -m
+php artisan make:model Comment -m
+
+Posts: title, image, detail, createdBy
+Comments: postId, comment, createdBy
+
+
+CRUD API Routes (grouped)
+Route::prefix('posts')->middleware('auth:sanctum')->group(function () {
+    Route::post('/', [PostController::class, 'store']);
+    Route::get('/', [PostController::class, 'index']);
+    Route::get('{id}/edit', [PostController::class, 'edit']);
+    Route::put('{id}', [PostController::class, 'update']);
+    Route::delete('{id}', [PostController::class, 'destroy']);
+});
+
+Route::prefix('comments')->middleware('auth:sanctum')->group(function () {
+    Route::post('/', [CommentController::class, 'store']);
+    Route::get('/', [CommentController::class, 'index']);
+    Route::get('{id}/edit', [CommentController::class, 'edit']);
+    Route::put('{id}', [CommentController::class, 'update']);
+    Route::delete('{id}', [CommentController::class, 'destroy']);
+});
+
+
+Request Validation
+    php artisan make:request PostRequest
+    php artisan make:request CommentRequest
+Apply validation in each controller method using PostRequest, CommentRequest.
+
+
+Admin Panel: Show Posts in Yajra DataTable
+    composer require yajra/laravel-datatables-oracle
+    Use controller + PostDataTable to show post list in Blade.
+
+
+✅ Summary of What You’ll Implement
+    Feature	Tech
+    Admin Login	Laravel Fortify
+    Auth API (signup/login/profile)	Laravel Sanctum + JWT
+    Firebase	Firebase Auth (on registration)
+    Email	Laravel Mail + Queue + Event
+    Dashboard Stats	Blade + Eloquent
+    API CRUD	REST APIs for Posts & Comments
+    Password Reset	Custom logic using APIs
+    Exception Handling	try/catch + transactions
+    Validation	Form Requests
+    Monitoring	Laravel Telescope
+    Admin UI	Yajra DataTables
