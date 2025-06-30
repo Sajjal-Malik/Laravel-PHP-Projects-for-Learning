@@ -1,0 +1,142 @@
+1. What we’re really building
+Piece	Goal	Result
+Git branches	Isolate work for each concern (task_6 feature work, staging tweaks, acceptance tweaks)	3 new branches that each contain only the changes they’re responsible for.
+Environment files	Point the same Laravel codebase at different configs (DB, cache, mail, etc.)	Separate .env files (.env.local, .env.staging, .env.acceptance) so each environment behaves differently without code changes.
+Simple demo views + routes	Verify that each branch compiles & can serve its own page	/staging and /acceptance endpoints showing a “Welcome…” message.
+Pull‑requests	Keep master clean, review changes, and document history	Every branch ends in a PR against master.
+
+
+2. Prerequisites (one‑time)
+# Already inside your project directory
+    git branch        # you should at least see "master"
+    composer install  # make sure vendor packages are in place
+    cp .env.example .env.local   # starting point for your local env
+    php artisan key:generate
+Laravel already ships with vlucas/phpdotenv, so there’s nothing extra to install.
+
+
+3. Create the feature branch for the exercise instructions (task_6)
+Think of task_6 as the “article” branch that records the instructions and placeholder files you’re adding.
+    git checkout -b task_6
+
+3.1 Add baseline environment files to the repo
+You normally wouldn’t commit secret values, but sample files are fine.
+    cp .env.local .env.staging          # edit as needed
+    cp .env.local .env.acceptance
+
+Open each file and adjust only the values that change:
+File	Key lines to edit
+    .env.local	APP_ENV=local, your local DB credentials
+    .env.staging	APP_ENV=staging, staging DB, mail, cache, etc.
+    .env.acceptance	APP_ENV=acceptance, acceptance DB, mail, cache, etc.
+If you’re new to “dotenv”, remember that env('NAME') is evaluated once when the config is cached. So after changing any environment file you’ll run php artisan config:clear (locally) or just redeploy (on a server).
+
+Add a short README‑snippet at docs/task_6.md (or wherever you keep docs) explaining how to switch env files locally:
+# on mac/linux
+    cp .env.staging .env && php artisan serve
+# on windows
+    copy .env.staging .env
+
+3.2 Commit and push
+    git add .env.* docs/task_6.md
+    git commit -m "Task 6: add sample env files for local, staging, acceptance"
+    git push -u origin task_6
+
+Open GitHub/GitLab → create a Pull Request (PR) from task_6 → master.
+Leave it open for now; we’ll merge when everything works.
+
+
+4. The staging branch
+    git checkout -b staging master   # always branch *off* a clean master
+
+4.1 View & route
+    resources/views/staging.blade.php
+
+<!-- simple placeholder -->
+@extends('layouts.app')
+
+@section('content')
+    <h1 class="text-center text-info">Welcome to Staging Branch</h1>
+@endsection
+
+routes/web.php (bottom of file)
+Route::get('/staging', fn () => view('staging'))
+     ->name('staging.welcome');
+(We don’t need a controller for a one‑liner demo.)
+
+
+4.2 Commit, push, PR
+    git add resources/views/staging.blade.php routes/web.php
+    git commit -m "Staging branch: staging.blade and /staging route"
+    git push -u origin staging
+
+Create a staging → master PR.
+
+
+5. The acceptance branch
+Same idea, but with its own file and route.
+    git checkout -b acceptance master
+
+5.1 View & route
+
+resources/views/acceptance.blade.php
+@extends('layouts.app')
+
+@section('content')
+    <h1 class="text-center text-success">Welcome to Acceptance Branch</h1>
+@endsection
+
+routes/web.php
+Route::get('/acceptance', fn () => view('acceptance'))
+     ->name('acceptance.welcome');
+
+5.2 Commit, push, PR
+    git add resources/views/acceptance.blade.php routes/web.php
+    git commit -m "Acceptance branch: acceptance.blade and /acceptance route"
+    git push -u origin acceptance
+
+Open a PR acceptance → master.
+
+
+6. Merging strategy
+Review each PR (self‑review or peer‑review).
+
+Squash‑merge or rebase‑merge into master so history stays linear.
+
+After merging, pull the latest master locally:
+    git checkout master
+    git pull origin master
+Delete the remote branches if you like (git push origin --delete staging).
+
+
+7. Deploying with multiple .env files
+On your servers/containers:
+    Environment	Deployment branch	.env file placed on server
+    local dev machines	usually your feature branch	.env (copied from .env.local)
+    staging server	master or staging (decide with team)	/var/www/laravel/.env copied from secrets (never committed)
+acceptance server	master or acceptance	same idea
+
+In CI/CD (GitHub Actions, GitLab CI, Jenkins, etc.) you’ll store the real values as encrypted “secrets” and inject them at deploy time.
+
+
+8. Quick reference commands
+# create & switch
+    git checkout -b <branch>
+
+# stage & commit
+    git add <files>
+    git commit -m "message"
+
+# push first time
+    git push -u origin <branch>
+
+# subsequent pushes
+    git push
+
+
+9. Common pitfalls & pro tips
+Pitfall	Fix
+Accidentally pushing real .env secrets	Add /.env to .gitignore and only commit sample files (.env.example, .env.staging, …)
+Changes to .env not reflected	php artisan config:clear then reload page; in production redeploy or run php artisan config:cache
+Route cache confusion between branches	Run php artisan route:clear when switching.
+Merging conflicts in routes/web.php	Keep each branch small; resolve conflicts right in the PR UI.
