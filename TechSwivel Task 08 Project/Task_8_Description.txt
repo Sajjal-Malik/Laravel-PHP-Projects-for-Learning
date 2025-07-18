@@ -1,0 +1,208 @@
+✅ Step-by-Step Breakdown of Task 8: Order Management (Laravel 10 Project)
+We'll break this into phases, each with clear steps. You can follow this roadmap to build the project from scratch, and come back to me if you're stuck anywhere.
+
+
+📌 Phase 1: Project Setup
+✅ 1. Create New Laravel 10 Project
+    composer create-project laravel/laravel order-management
+    cd order-management
+
+✅ 2. Install Required Packages
+Laravel Fortify (for auth)
+Laravel Sanctum (for API auth)
+Firebase SDK (for Firestore)
+
+    composer require laravel/fortify
+    composer require laravel/sanctum
+    composer require kreait/laravel-firebase
+
+✅ 3. Configure Sanctum & Fortify
+Publish Fortify config
+    php artisan vendor:publish --provider="Laravel\Fortify\FortifyServiceProvider"
+
+Setup FortifyServiceProvider and modify boot() to support username/email login.
+
+Setup Fortify for Admin Panel Side authentication Order Creation (Rider and Customer).
+
+Setup Sanctum in config/sanctum.php.
+
+✅ 4. Configure Firebase (Firestore)
+Create project on Firebase console.
+
+Generate service account key (firebase_credentials.json) and place it in storage/firebase/
+
+Configure config/firebase.php
+
+
+📌 Phase 2: Database Design & Migrations
+✅ 5. Roles and Users Table
+Use default users table, but add:
+
+    $table->tinyInteger('role')->comment('1=ADMIN,2=RIDER,3=CUSTOMER');
+    $table->unsignedBigInteger('riderId')->nullable(); // for customer
+
+✅ 6. Orders Table
+$table->id();
+$table->unsignedBigInteger('customerId');
+$table->unsignedBigInteger('riderId');
+$table->enum('status', ['PENDING', 'ACCEPTED', 'PICKED', 'ON_MY_WAY', 'DELIVERED', 'COMPLETED'])->default('PENDING');
+$table->text('details')->nullable();
+$table->timestamps();
+
+✅ 7. Feedback Table
+$table->id();
+$table->unsignedBigInteger('orderId');
+$table->unsignedBigInteger('customerId');
+$table->text('comment');
+$table->tinyInteger('rating');
+$table->timestamps();
+
+
+📌 Phase 3: Role Management & Seeding
+✅ 8. Create Seeder for Admin
+    php artisan make:seeder AdminSeeder
+Seed with admin user and role admin.
+
+
+📌 Phase 4: Authentication
+✅ 9. Signup/Login Endpoints
+Routes:
+    POST /api/signup
+    POST /api/signin
+
+Signup:
+
+    Accepts role rider or customer
+
+    For customer, must include riderId in request
+
+    Creates and returns user with token
+
+Signin:
+
+    Validates credentials and returns token
+
+
+📌 Phase 5: Order Flow Logic
+✅ 10. Admin Creates Riders
+Accessible only by admin
+
+Admin creates riders from Admin Panel or endpoint
+
+✅ 11. Admin Creates Order for Customer
+Endpoint: POST /api/order/create
+
+Assign to customer + selected rider
+
+On creation:
+
+Notify rider: "Order Created" (send Firestore write or notification)
+
+Write to Firestore manually
+
+✅ 12. Rider Accepts Order
+Rider changes status from PENDING → ACCEPTED
+
+Endpoint: PUT /api/order/updateOrder
+
+✅ 13. Rider Marks Order as PICKED → ON_MY_WAY → DELIVERED
+Step-by-step status update via PUT /api/order/updateOrder
+
+Each status update also writes data to Firestore (manual write)
+
+Trigger real-time listener if implemented
+
+
+📌 Phase 6: Customer Feedback
+✅ 14. Customer Adds Feedback
+Only after DELIVERED status
+
+Adds comment and rating
+
+Endpoint: POST /api/order/{orderId}/feedback
+
+After feedback is stored, order is marked as COMPLETED
+
+
+📌 Phase 7: Order Status and Details
+✅ 15. Order Listing
+Endpoint:
+
+    GET /api/order/allUserOrder?status=ALL
+    Returns user’s orders by status
+    Use API Resource + Collection
+
+✅ 16. Order Detail
+Endpoint:
+    GET /api/order/{orderId}
+    Complete order detail with status, rider info, feedback if available
+
+✅ 17. Edit Order (Only if PENDING)
+Endpoint:
+    PUT /api/order/{orderId}/edit
+    Only admin or customer can edit
+    Restriction: Only when status is PENDING
+
+📌 Phase 8: Firestore Integration
+✅ 18. Manual Write & Read (Firestore)
+Rider writes order status update to Firestore using endpoint
+
+Customer reads order data from Firestore using endpoint
+
+    POST /api/firestore/write
+    GET /api/firestore/read/{orderId}
+
+✅ 19. Real-Time Firestore
+    Use Laravel listener (if supported) or Node.js for real-time updates
+    Admin can view order updates in real-time (status changes by rider)
+
+
+📌 Phase 9: Validation and Resources
+✅ 20. Request Validations
+Create separate Request classes:
+
+    SignupRequest
+
+    OrderCreateRequest
+
+    OrderUpdateRequest
+
+    FeedbackRequest
+
+    Handle all validation cleanly
+
+
+✅ 21. Resources
+Use API Resources for all response formatting:
+    UserResource
+
+    OrderResource
+
+    FeedbackResource
+
+
+📌 Phase 10: Error Handling & Transactions
+✅ 22. Use try-catch and DB Transactions
+Wrap all order-creation, update, and feedback processes with:
+
+    DB::beginTransaction();
+    try {
+        // your logic
+        DB::commit();
+    } catch (\Exception $e) {
+        DB::rollback();
+        return response()->json(['error' => 'Something went wrong.'], 500);
+    }
+
+🔄 API Routes Summary
+
+Endpoint	                                Description
+POST /api/signup	                        Rider or Customer registration
+POST /api/signin	                        Login
+POST /api/updateProfile	                    Update user profile
+GET /api/order/allUserOrder?status=ALL	    List all orders by status
+GET /api/order/{orderId}	                Get order detail
+PUT /api/order/{orderId}/edit	            Edit order (only if status is PENDING)
+PUT /api/order/updateOrder	                Rider updates order status
+POST /api/firestore/write	                Write order to Firestore
+GET /api/firestore/read/{orderId}	        Read order from Firestore
