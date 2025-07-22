@@ -1,0 +1,192 @@
+✅ Task 9: Laravel Admin Panel with Scheduler + API + Repository + Fortify + Sanctum
+🔹 STEP 0: Setup New Project & Basic Configuration
+
+Create New Laravel 10 Project
+
+    laravel new admin-panel-task9
+    cd admin-panel-task9
+    Set DB Connection in .env
+    Configure DB_DATABASE, DB_USERNAME, DB_PASSWORD
+
+
+Install Packages
+
+    composer require laravel/fortify laravel/sanctum yajra/laravel-datatables-oracle laravel/telescope
+    php artisan vendor:publish --provider="Laravel\Fortify\FortifyServiceProvider"
+    php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
+    php artisan vendor:publish --provider="Laravel\\Telescope\\TelescopeServiceProvider"
+
+
+Configure Sanctum & Fortify
+
+    Add Sanctum middleware in api group in app/Http/Kernel.php
+
+    Set Fortify configurations for username/password login only
+
+
+🔹 STEP 1: AdminLTE 3.2 Setup
+    Download AdminLTE v3.2 and place its dist/ and plugins/ inside public/adminlte/
+
+Create:
+
+    resources/views/layouts/app.blade.php → Base layout
+
+    resources/views/auth/login.blade.php → Fortify custom login
+
+    resources/views/dashboard.blade.php → Admin dashboard
+
+    Add common structure: sidebar, topnav, content area in layout
+
+
+
+🔹 STEP 2: User & Admin Seeder
+Create migration for users table (already exists, just customize):
+
+    Add role (1 = Admin, 2 = User), status (Active/Blocked), username field
+
+Create a Seeder:
+    php artisan make:seeder AdminUserSeeder
+
+    Add a default admin with email you’ll later authorize in Telescope
+
+
+🔹 STEP 3: Fortify Login (Web + API)
+    Configure Fortify login using username or email
+
+    Customize Fortify::authenticateUsing() in FortifyServiceProvider.php
+
+
+Setup API login endpoint:
+    POST /api/signin → use Fortify + Sanctum token creation in controller
+
+
+🔹 STEP 4: Telescope Secure Setup
+    In TelescopeServiceProvider, authorize only specific admin email(s)
+
+    Gate::define('viewTelescope', fn($user) => in_array($user->email, ['admin@example.com']));
+
+    Login as admin, visit /telescope
+
+🔹 STEP 5: Profile CRUD Setup
+Create profiles table:
+
+    php artisan make:model Profile -m
+Migration fields:
+
+    firstName (required)
+
+    lastName
+
+    email (required)
+
+    age (required)
+
+    ageStatus (nullable enum) ← use separate ProfileAgeStatusEnum
+
+    phoneNumber, bio, dob, gender (required), picture (required)
+
+    userId (foreign key to users table)
+
+    Create ProfileSeeder for testing
+
+
+🔹 STEP 6: Repository Pattern
+Create:
+
+    App\Repositories\Contracts\ProfileRepositoryInterface
+
+    App\Repositories\Eloquent\ProfileRepository
+
+    Bind in AppServiceProvider.php
+
+    Use try-catch, DB::beginTransaction() for create/update/delete methods
+
+
+🔹 STEP 7: Backend + Frontend Validation
+    Web (Dashboard):
+
+    Create Blade views for listing (with Yajra), create/edit profile
+
+    Use Parsley.js or HTML5 validations
+
+API Endpoints:
+
+    Separate Request classes for validation (e.g. ProfileApiRequest)
+
+    Return standardized response with JsonResource class
+
+
+🔹 STEP 8: API Routes
+
+Define in routes/api.php with auth:sanctum middleware:
+    POST   /api/signin
+    POST   /api/profile
+    GET    /api/profile
+    GET    /api/profile/{id}
+    PUT    /api/profile/{id}/edit
+    DELETE /api/profile/{id}
+
+
+🔹 STEP 9: API Resource / Collection
+Create:
+
+    ProfileResource
+
+    ProfileCollection
+
+Use in controller:
+
+    return new ProfileResource($profile);
+    return ProfileCollection::collection(Profile::all());
+
+
+🔹 STEP 10: Yajra DataTable (Admin Panel)
+    Setup in index.blade.php to show profiles in table
+
+    Use AJAX + jQuery for:
+
+    Create/Edit/Delete modals
+
+    File upload Trait
+
+    Error/Success handling
+
+
+🔹 STEP 11: Scheduler for ageStatus
+Create Enum:
+
+enum ProfileAgeStatusEnum: string {
+    case KID_FEMALE = 'KID_FEMALE';
+    case YOUNG_FEMALE = 'YOUNG_FEMALE';
+    case ELDER_FEMALE = 'ELDER_FEMALE';
+    case FEMALE = 'FEMALE';
+    case KID_MALE = 'KID_MALE';
+    case YOUNG_MALE = 'YOUNG_MALE';
+    case ELDER_MALE = 'ELDER_MALE';
+    case MALE = 'MALE';
+}
+
+Create scheduler command:
+
+    php artisan make:command UpdateProfileAgeStatus
+
+Logic:
+
+    Run through all profiles
+
+    Based on age and gender, assign enum to ageStatus
+
+
+Register in app/Console/Kernel.php:
+
+$schedule->command(UpdateProfileAgeStatus::class)->daily();
+
+
+🔹 Final Notes
+    Make sure Sanctum works with API tokens.
+
+    Telescope must be protected by role/email.
+
+    Use response()->json() with proper HTTP codes (200, 201, 422, 404).
+
+    Validate file uploads properly (check image size, format).
